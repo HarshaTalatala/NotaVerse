@@ -1,0 +1,28 @@
+{
+  "name": "notaverse-backend",
+  "version": "1.0.0",
+  "description": "Azure Functions backend for NotaVerse application",
+  "main": "dist/src/functions/*.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "prestart": "npm run build",
+    "start": "func start",
+    "test": "echo \"No tests yet\"",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.5.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "firebase-admin": "^13.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

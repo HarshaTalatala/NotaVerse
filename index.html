@@ -7,6 +7,27 @@
     <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups" />
     <meta http-equiv="Cross-Origin-Embedder-Policy" content="unsafe-none" />
     <title>NotaVerse</title>
+    <!-- Theme initialization script to prevent flash of light theme -->
+    <script>
+      (function() {
+        try {
+          const theme = localStorage.getItem('theme');
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else if (theme === 'light') {
+            document.documentElement.classList.remove('dark');
+          } else {
+            // Check system preference
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+              document.documentElement.classList.add('dark');
+            }
+          }
+        } catch (e) {
+          // Ignore errors in case localStorage is not available
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -28,7 +28,7 @@ export const eventCreateSchema = z.object({
   organizer: z.string().min(2).default('Event Organizer'),
   capacity: z.number().int().positive().max(10000).nullable().optional(),
   tags: z.array(z.string().min(1)).max(25).optional().default([]),
-  imageUrl: z.string().url().nullable().optional(),
+  imageUrl: z.string().url().nullable().optional().or(z.literal('')).transform(val => val === '' ? null : val),
 });
 
 export type EventCreateInput = z.infer<typeof eventCreateSchema>;

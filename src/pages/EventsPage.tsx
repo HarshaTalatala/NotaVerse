@@ -4,7 +4,7 @@ import { db } from '@/services/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import CustomDropdown from '@/components/CustomDropdown';
 import { useEvents } from '@/hooks/useEvents';
-import { createEvent, toggleRsvp, addSampleEvents as svcAddSampleEvents, parseFormToEvent } from '@/services/eventsService';
+import { createEvent, toggleRsvp, parseFormToEvent, deleteEvent } from '@/services/eventsService';
 import Pagination from '@/components/ui/Pagination';
 import Spinner from '@/components/ui/Spinner';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -30,6 +30,7 @@ type Event = {
 export default function EventsPage() {
   const { user, role } = useAuth();
   const [rsvpLoading, setRsvpLoading] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const {
     events, total, page, pageSize, setPage,
@@ -38,8 +39,6 @@ export default function EventsPage() {
     all: allEvents
   } = useEvents({ pageSize: 9 });
   const [actionError, setActionError] = useState<string | null>(null);
-  const [sampleLoading, setSampleLoading] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -72,6 +71,29 @@ export default function EventsPage() {
       setActionError(err.message || 'Failed to RSVP');
     } finally {
       setRsvpLoading(null);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: string, eventTitle: string) => {
+    if (!user || role !== 'admin') {
+      setActionError('Only admins can delete events');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete the event "${eventTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeleteLoading(eventId);
+    setActionError(null);
+    try {
+      await deleteEvent(eventId);
+      console.log('✅ Event deleted successfully:', eventTitle);
+    } catch (err: any) {
+      console.error('❌ Delete event error:', err);
+      setActionError(err.message || 'Failed to delete event');
+    } finally {
+      setDeleteLoading(null);
     }
   };
 
@@ -138,21 +160,6 @@ export default function EventsPage() {
     }
   };
 
-  const addSampleEvents = async () => {
-    if (!user) { setActionError('You must be logged in to create events'); return; }
-    setSampleLoading(true);
-    setActionError(null);
-    try {
-      await svcAddSampleEvents(user.uid);
-      setShowAddModal(false);
-    } catch (error: any) {
-      console.error('Error adding sample events:', error);
-      setActionError(error.message || 'Failed to add sample events');
-    } finally {
-      setSampleLoading(false);
-    }
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -192,7 +199,9 @@ export default function EventsPage() {
     setCreateLoading(true);
     setActionError(null);
     try {
+      console.log('Form data before parsing:', formData);
       const parsed = parseFormToEvent(formData);
+      console.log('Parsed event data:', parsed);
       (globalThis as any).CURRENT_USER_ID = user.uid; // used by service
       await createEvent(parsed as any);
       setFormData({
@@ -285,33 +294,52 @@ export default function EventsPage() {
               )}
             </div>
 
-            <button
-              onClick={() => rsvp(event.id)}
-              disabled={!user || rsvpLoading === event.id || status === 'past'}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 ${
-                isRsvped
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed'
-              }`}
-            >
-              {rsvpLoading === event.id ? (
-                <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-              ) : isRsvped ? (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Attending
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  RSVP
-                </>
+            <div className="flex items-center gap-2">
+              {role === 'admin' && (
+                <button
+                  onClick={() => handleDeleteEvent(event.id, event.title)}
+                  disabled={deleteLoading === event.id}
+                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200 disabled:opacity-50"
+                  title="Delete Event"
+                >
+                  {deleteLoading === event.id ? (
+                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  )}
+                </button>
               )}
-            </button>
+              
+              <button
+                onClick={() => rsvp(event.id)}
+                disabled={!user || rsvpLoading === event.id || status === 'past'}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 ${
+                  isRsvped
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed'
+                }`}
+              >
+                {rsvpLoading === event.id ? (
+                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                ) : isRsvped ? (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Attending
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    RSVP
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -351,17 +379,36 @@ export default function EventsPage() {
             </div>
           </div>
 
-          <button
-            onClick={() => rsvp(event.id)}
-            disabled={!user || rsvpLoading === event.id || status === 'past'}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 ${
-              isRsvped
-                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 hover:bg-green-200'
-                : 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:text-gray-500'
-            }`}
-          >
-            {rsvpLoading === event.id ? '...' : isRsvped ? 'Attending' : 'RSVP'}
-          </button>
+          <div className="flex items-center gap-2">
+            {role === 'admin' && (
+              <button
+                onClick={() => handleDeleteEvent(event.id, event.title)}
+                disabled={deleteLoading === event.id}
+                className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200 disabled:opacity-50"
+                title="Delete Event"
+              >
+                {deleteLoading === event.id ? (
+                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                )}
+              </button>
+            )}
+            
+            <button
+              onClick={() => rsvp(event.id)}
+              disabled={!user || rsvpLoading === event.id || status === 'past'}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 ${
+                isRsvped
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 hover:bg-green-200'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:text-gray-500'
+              }`}
+            >
+              {rsvpLoading === event.id ? '...' : isRsvped ? 'Attending' : 'RSVP'}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -415,26 +462,15 @@ export default function EventsPage() {
             </p>
           </div>
           {role === 'admin' && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Create Event
-              </button>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Sample Data
-              </button>
-            </div>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Create Event
+            </button>
           )}
         </div>
       </div>
@@ -561,8 +597,8 @@ export default function EventsPage() {
                 ? 'Try adjusting your search criteria'
                 : 'No events have been created yet'}
             </p>
-            {!search && !type && (status === 'all' || !status) && user && (
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {!search && !type && (status === 'all' || !status) && user && role === 'admin' && (
+              <div className="flex justify-center">
                 <button
                   onClick={() => setShowCreateForm(true)}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200"
@@ -571,15 +607,6 @@ export default function EventsPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   Create Event
-                </button>
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors duration-200"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  Add Sample Events
                 </button>
               </div>
             )}
@@ -605,36 +632,6 @@ export default function EventsPage() {
       {filteredEvents.length > 0 && (
         <div className="flex justify-center pt-4">
           <Pagination page={page} pageSize={pageSize} total={allEvents.length} onChange={setPage} />
-        </div>
-      )}
-
-      {/* Add Sample Events Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Add Sample Events
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Add sample event data to get started with your events directory. This will create 5 different types of events.
-            </p>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={addSampleEvents}
-                disabled={loading}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-              >
-                {loading ? 'Adding...' : 'Add Sample Events'}
-              </button>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors duration-200"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
         </div>
       )}
 

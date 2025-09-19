@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { useAuth } from '@/contexts/AuthContext';
+import CustomDropdown from '@/components/CustomDropdown';
 
 function requireDb() {
   if (!db) throw new Error('Firestore not initialized');
@@ -277,18 +278,19 @@ export default function StudentProfilePage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Year</label>
-                  <select 
-                    value={student.year || ''} 
-                    onChange={(e) => setStudent({...student, year: parseInt(e.target.value) || undefined})}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="">Select Year</option>
-                    <option value="1">1st Year</option>
-                    <option value="2">2nd Year</option>
-                    <option value="3">3rd Year</option>
-                    <option value="4">4th Year</option>
-                    <option value="5">5th Year+</option>
-                  </select>
+                  <CustomDropdown
+                    options={[
+                      { value: '', label: 'Select Year' },
+                      { value: '1', label: '1st Year' },
+                      { value: '2', label: '2nd Year' },
+                      { value: '3', label: '3rd Year' },
+                      { value: '4', label: '4th Year' }
+                    ]}
+                    value={student.year?.toString() || ''}
+                    onChange={(value: string) => setStudent({...student, year: value ? parseInt(value) : undefined})}
+                    placeholder="Select Year"
+                    className="w-full"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">GPA</label>

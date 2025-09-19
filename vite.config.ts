@@ -30,13 +30,13 @@ export default defineConfig(({ mode }) => {
       },
       proxy: {
         '/api': {
-          target: 'http://localhost:3001',
+          target: env.VITE_DEV_API_URL || 'http://localhost:7071',
           changeOrigin: true,
           secure: false,
           timeout: 30000,
           configure: (proxy, _options) => {
             proxy.on('error', (err, _req, _res) => {
-              console.log('❌ Proxy error - is Vercel dev server running on port 3001?', err.message);
+              console.log('❌ Proxy error - is Azure Functions Core Tools running on port 7071?', err.message);
             });
             proxy.on('proxyReq', (proxyReq, req, _res) => {
               console.log('🔄 Proxying:', req.method, req.url, '→', proxyReq.protocol + '//' + proxyReq.getHeader('host') + proxyReq.path);

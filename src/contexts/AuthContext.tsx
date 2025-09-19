@@ -1,6 +1,6 @@
 import { ReactNode, createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, User } from 'firebase/auth';
-import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, User } from 'firebase/auth';
+import { doc, getDoc, onSnapshot, setDoc, addDoc, collection, query, where, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db, useMockFirebase } from '../services/firebase';
 
 
@@ -14,13 +14,15 @@ function requireDb() {
   return db;
 }
 
-type Role = 'admin' | 'alumni' | 'student';
+type Role = 'admin' | 'alumni' | 'student'; // Keep admin for internal use, but not exposed in registration
 
 type AuthContextValue = {
   user: User | null;
   role: Role | null;
   loading: boolean;
   signInEmail: (email: string, password: string) => Promise<void>;
+  signUpEmail: (email: string, password: string, userData: { name: string; role: Role; roleData?: any }) => Promise<void>;
+  submitRegistration: (email: string, password: string, userData: { name: string; role: Role; roleData?: any }) => Promise<void>;
   signInGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   authError: string | null;
@@ -218,6 +220,215 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(a, email, password);
   };
 
+  const signUpEmail = async (email: string, password: string, userData: { name: string; role: Role; roleData?: any }) => {
+    if (useMockFirebase) {
+      console.log('🔧 [auth] Mock mode: signUpEmail disabled');
+      setAuthError('Registration is disabled in development mode.');
+      return;
+    }
+    
+    const a = requireAuth();
+    const d = requireDb();
+    
+    try {
+      // Check if there's an approved registration for this email
+      const approvedRegistrationQuery = query(
+        collection(d, 'pendingRegistrations'), 
+        where('email', '==', email),
+        where('status', '==', 'approved')
+      );
+      const approvedRegistrationSnapshot = await getDocs(approvedRegistrationQuery);
+      
+      let isPreApproved = false;
+      let approvedRegistrationData = null;
+      
+      if (!approvedRegistrationSnapshot.empty) {
+        // Found an approved registration
+        isPreApproved = true;
+        approvedRegistrationData = approvedRegistrationSnapshot.docs[0].data();
+        
+        // Verify the role matches
+        if (approvedRegistrationData.role !== userData.role) {
+          throw new Error(`Role mismatch. Your approved registration is for ${approvedRegistrationData.role}, but you're trying to register as ${userData.role}.`);
+        }
+        
+        console.log('✅ Found approved registration for:', email);
+      }
+      
+      // Create the user account
+      const userCredential = await createUserWithEmailAndPassword(a, email, password);
+      const user = userCredential.user;
+      
+      // Create user document in Firestore
+      const userDocData = {
+        email: user.email,
+        displayName: userData.name,
+        role: userData.role,
+        isApproved: isPreApproved, // Approved if there was a pre-approved registration
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...(isPreApproved && {
+          approvedAt: new Date(),
+          approvedBy: approvedRegistrationData?.reviewedBy || 'admin',
+          preApproved: true
+        })
+      };
+      
+      await setDoc(doc(d, 'users', user.uid), userDocData);
+      
+      // Use data from approved registration if available, otherwise use provided data
+      const roleData = (isPreApproved && approvedRegistrationData) ? approvedRegistrationData.roleData : userData.roleData;
+      
+      // Check for existing profile documents (created during admin approval) and migrate them
+      const tempId = user.email?.replace(/[.@]/g, '_');
+      
+      // Create role-specific profile
+      if (userData.role === 'student' && roleData) {
+        let studentData: any = {
+          name: userData.name,
+          email: user.email,
+          userId: user.uid,
+          createdAt: new Date(),
+          status: 'active'
+        };
+        
+        // Check if there's an existing student document with tempId
+        if (tempId) {
+          try {
+            const existingStudentDoc = await getDoc(doc(d, 'students', tempId));
+            if (existingStudentDoc.exists()) {
+              // Use existing data from admin approval
+              const existingData = existingStudentDoc.data();
+              studentData = {
+                ...existingData,
+                userId: user.uid,
+                activatedAt: new Date(),
+                tempId: undefined // Remove temp ID
+              };
+              // Delete the temporary document
+              await deleteDoc(doc(d, 'students', tempId));
+              console.log('✅ Migrated existing student profile for:', user.email);
+            }
+          } catch (error) {
+            console.log('No existing student profile to migrate for:', user.email);
+          }
+        }
+        
+        // If no existing data, use roleData from registration
+        if (!studentData.studentId && roleData) {
+          if (roleData.studentId) studentData.studentId = roleData.studentId;
+          if (roleData.year) studentData.year = parseInt(roleData.year);
+          if (roleData.major) studentData.major = roleData.major;
+          if (roleData.gpa) studentData.gpa = parseFloat(roleData.gpa);
+          if (roleData.phone) studentData.phone = roleData.phone;
+          if (roleData.address) studentData.address = roleData.address;
+          if (roleData.emergencyContact) studentData.emergencyContact = roleData.emergencyContact;
+          if (roleData.expectedGraduation) studentData.expectedGraduation = parseInt(roleData.expectedGraduation);
+          if (roleData.clubs) {
+            studentData.clubs = typeof roleData.clubs === 'string' 
+              ? roleData.clubs.split(',').map((c: string) => c.trim()).filter(Boolean)
+              : roleData.clubs;
+          }
+        }
+        
+        await setDoc(doc(d, 'students', user.uid), studentData);
+      } else if (userData.role === 'alumni' && roleData) {
+        let alumniData: any = {
+          name: userData.name,
+          email: user.email,
+          userId: user.uid,
+          createdAt: new Date()
+        };
+        
+        // Check if there's an existing alumni document with tempId
+        if (tempId) {
+          try {
+            const existingAlumniDoc = await getDoc(doc(d, 'alumni', tempId));
+            if (existingAlumniDoc.exists()) {
+              // Use existing data from admin approval
+              const existingData = existingAlumniDoc.data();
+              alumniData = {
+                ...existingData,
+                userId: user.uid,
+                activatedAt: new Date(),
+                tempId: undefined // Remove temp ID
+              };
+              // Delete the temporary document
+              await deleteDoc(doc(d, 'alumni', tempId));
+              console.log('✅ Migrated existing alumni profile for:', user.email);
+            }
+          } catch (error) {
+            console.log('No existing alumni profile to migrate for:', user.email);
+          }
+        }
+        
+        // If no existing data, use roleData from registration
+        if (!alumniData.graduationYear && roleData) {
+          if (roleData.graduationYear) alumniData.graduationYear = parseInt(roleData.graduationYear);
+          if (roleData.company) alumniData.company = roleData.company;
+          if (roleData.title) alumniData.title = roleData.title;
+          if (roleData.location) alumniData.location = roleData.location;
+          if (roleData.linkedIn) alumniData.linkedIn = roleData.linkedIn;
+          if (roleData.bio) alumniData.bio = roleData.bio;
+          if (roleData.industry) alumniData.industry = roleData.industry;
+          if (roleData.experience) alumniData.experience = parseInt(roleData.experience);
+          if (roleData.skills) {
+            alumniData.skills = typeof roleData.skills === 'string'
+              ? roleData.skills.split(',').map((s: string) => s.trim()).filter(Boolean)
+              : roleData.skills;
+          }
+        }
+        
+        await setDoc(doc(d, 'alumni', user.uid), alumniData);
+      }
+      
+      // If this was a pre-approved registration, mark it as completed
+      if (isPreApproved) {
+        await updateDoc(doc(d, 'pendingRegistrations', approvedRegistrationSnapshot.docs[0].id), {
+          status: 'completed',
+          completedAt: new Date(),
+          userCreatedAt: new Date(),
+          userId: user.uid
+        });
+      }
+      
+      console.log('✅ User registration successful:', user.email, isPreApproved ? '(pre-approved)' : '(pending approval)');
+    } catch (error: any) {
+      console.error('❌ Registration failed:', error);
+      throw error;
+    }
+  };
+
+  const submitRegistration = async (email: string, password: string, userData: { name: string; role: Role; roleData?: any }) => {
+    if (useMockFirebase) {
+      console.log('🔧 [auth] Mock mode: submitRegistration disabled');
+      setAuthError('Registration is disabled in development mode.');
+      return;
+    }
+    
+    const d = requireDb();
+    
+    try {
+      // Save pending registration
+      const registrationData = {
+        name: userData.name,
+        email: email,
+        password: password, // In production, this should be hashed
+        role: userData.role,
+        roleData: userData.roleData || {},
+        status: 'pending',
+        submittedAt: new Date()
+      };
+      
+      await addDoc(collection(d, 'pendingRegistrations'), registrationData);
+      
+      console.log('✅ Registration submitted for approval:', email);
+    } catch (error: any) {
+      console.error('❌ Registration submission failed:', error);
+      throw error;
+    }
+  };
+
   const signInGoogle = async () => {
     if (useMockFirebase) {
       console.log('🔧 [auth] Mock mode: Google sign-in disabled');
@@ -345,6 +556,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role, 
     loading, 
     signInEmail, 
+    signUpEmail,
+    submitRegistration,
     signInGoogle, 
     logout, 
     authError

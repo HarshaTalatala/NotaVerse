@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import Navbar from '@/components/Navbar';
 
 export default function LoginPage() {
@@ -8,28 +9,21 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'light';
-    const saved = localStorage.getItem('theme');
-    if (saved === 'light' || saved === 'dark') return saved;
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    return prefersDark ? 'dark' : 'light';
-  });
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation() as any;
   const from = location.state?.from?.pathname || '/dashboard';
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+  // Check for success message from registration
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clear the message from location state
+      window.history.replaceState({}, document.title);
     }
-    localStorage.setItem('theme', newTheme);
-  };
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,7 +80,7 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 required
-                className="input"
+                className="input-primary"
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -101,12 +95,23 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 required
-                className="input"
+                className="input-primary"
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+
+            {successMessage && (
+              <div className="rounded-xl bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800 p-4">
+                <div className="flex items-center">
+                  <svg className="h-5 w-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm text-green-600 dark:text-green-400">{successMessage}</span>
+                </div>
+              </div>
+            )}
 
             {error && (
               <div className="rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 p-4">

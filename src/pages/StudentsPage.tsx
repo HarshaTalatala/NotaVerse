@@ -196,16 +196,23 @@ export default function StudentsPage() {
       setLoading(true);
       setError(null);
 
-      await createStudent({
+      // Clean data - remove undefined values for Firebase
+      const studentData = {
         name: newStudent.name,
-        email: newStudent.email,
-        studentId: newStudent.studentId,
-        year: newStudent.year,
-        major: newStudent.major,
-        gpa: newStudent.gpa,
-        status: newStudent.status,
-        clubs: newStudent.clubs
-      });
+        studentId: newStudent.studentId || `STU${Date.now()}`,
+        status: newStudent.status as 'active' | 'inactive' | 'graduated' | 'suspended',
+        clubs: newStudent.clubs,
+        ...(newStudent.email && { email: newStudent.email }),
+        ...(newStudent.year && { year: parseInt(newStudent.year) }),
+        ...(newStudent.major && { major: newStudent.major }),
+        ...(newStudent.gpa && { gpa: parseFloat(newStudent.gpa) })
+      };
+
+      console.log('Student data being sent:', studentData);
+      await createStudent(studentData);
+      
+      // Close modal immediately after success
+      setShowNewStudentForm(false);
       
       // Reset form
       setNewStudent({
@@ -222,11 +229,16 @@ export default function StudentsPage() {
         expectedGraduation: '',
         clubs: ''
       });
-      
-      setShowNewStudentForm(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding student:', error);
-      setError('Failed to add student');
+      
+      // Show detailed error message
+      if (error.details) {
+        console.log('Validation errors:', error.details);
+        setError(`Validation failed: ${error.details.map((d: any) => d.message).join(', ')}`);
+      } else {
+        setError(`Failed to add student: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -649,7 +661,7 @@ export default function StudentsPage() {
               <input
                 type="text"
                 placeholder="Search by name, student ID, major, or email..."
-                className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                className="input-primary block w-full pl-10 pr-3 py-2.5"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -853,7 +865,7 @@ export default function StudentsPage() {
                     required
                     value={newStudent.name}
                     onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                    className="input-primary"
                     placeholder="Enter full name"
                   />
                 </div>
@@ -867,7 +879,7 @@ export default function StudentsPage() {
                     type="email"
                     value={newStudent.email}
                     onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                    className="input-primary"
                     placeholder="email@university.edu"
                   />
                 </div>
@@ -881,7 +893,7 @@ export default function StudentsPage() {
                     type="text"
                     value={newStudent.studentId}
                     onChange={(e) => setNewStudent({ ...newStudent, studentId: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                    className="input-primary"
                     placeholder="ST2024001"
                   />
                 </div>
@@ -891,18 +903,19 @@ export default function StudentsPage() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Year
                   </label>
-                  <select
+                  <CustomDropdown
+                    options={[
+                      { value: '', label: 'Select Year' },
+                      { value: '1', label: '1st Year' },
+                      { value: '2', label: '2nd Year' },
+                      { value: '3', label: '3rd Year' },
+                      { value: '4', label: '4th Year' }
+                    ]}
                     value={newStudent.year}
-                    onChange={(e) => setNewStudent({ ...newStudent, year: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  >
-                    <option value="">Select Year</option>
-                    <option value="1">Year 1</option>
-                    <option value="2">Year 2</option>
-                    <option value="3">Year 3</option>
-                    <option value="4">Year 4</option>
-                    <option value="5">Year 5</option>
-                  </select>
+                    onChange={(value) => setNewStudent({ ...newStudent, year: value })}
+                    placeholder="Select Year"
+                    className="w-full"
+                  />
                 </div>
 
                 {/* Major */}
@@ -914,7 +927,7 @@ export default function StudentsPage() {
                     type="text"
                     value={newStudent.major}
                     onChange={(e) => setNewStudent({ ...newStudent, major: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                    className="input-primary"
                     placeholder="Computer Science"
                   />
                 </div>
@@ -931,7 +944,7 @@ export default function StudentsPage() {
                     max="4"
                     value={newStudent.gpa}
                     onChange={(e) => setNewStudent({ ...newStudent, gpa: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                    className="input-primary"
                     placeholder="3.75"
                   />
                 </div>
@@ -945,7 +958,7 @@ export default function StudentsPage() {
                     type="tel"
                     value={newStudent.phone}
                     onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                    className="input-primary"
                     placeholder="+1-555-0123"
                   />
                 </div>
@@ -955,16 +968,18 @@ export default function StudentsPage() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Status
                   </label>
-                  <select
+                  <CustomDropdown
+                    options={[
+                      { value: 'active', label: 'Active' },
+                      { value: 'inactive', label: 'Inactive' },
+                      { value: 'graduated', label: 'Graduated' },
+                      { value: 'suspended', label: 'Suspended' }
+                    ]}
                     value={newStudent.status}
-                    onChange={(e) => setNewStudent({ ...newStudent, status: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="graduated">Graduated</option>
-                    <option value="suspended">Suspended</option>
-                  </select>
+                    onChange={(value) => setNewStudent({ ...newStudent, status: value })}
+                    placeholder="Select Status"
+                    className="w-full"
+                  />
                 </div>
 
                 {/* Expected Graduation */}
@@ -978,7 +993,7 @@ export default function StudentsPage() {
                     max="2030"
                     value={newStudent.expectedGraduation}
                     onChange={(e) => setNewStudent({ ...newStudent, expectedGraduation: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                    className="input-primary"
                     placeholder="2027"
                   />
                 </div>
@@ -992,7 +1007,7 @@ export default function StudentsPage() {
                     type="text"
                     value={newStudent.address}
                     onChange={(e) => setNewStudent({ ...newStudent, address: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                    className="input-primary"
                     placeholder="123 University Ave, City, State 12345"
                   />
                 </div>
@@ -1006,7 +1021,7 @@ export default function StudentsPage() {
                     type="text"
                     value={newStudent.emergencyContact}
                     onChange={(e) => setNewStudent({ ...newStudent, emergencyContact: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                    className="input-primary"
                     placeholder="Parent Name - +1-555-0123"
                   />
                 </div>
@@ -1020,7 +1035,7 @@ export default function StudentsPage() {
                     type="text"
                     value={newStudent.clubs}
                     onChange={(e) => setNewStudent({ ...newStudent, clubs: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                    className="input-primary"
                     placeholder="Separate clubs with commas (e.g., Programming Club, Student Government)"
                   />
                 </div>

@@ -1,0 +1,11 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
+    "CORS_ORIGIN": "http://localhost:3000,http://localhost:5173,https://yourfrontend.com",
+    "FIREBASE_PROJECT_ID": "nota-verse",
+    "GOOGLE_APPLICATION_CREDENTIALS": ""
+  }
+}

@@ -1,29 +1,13 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useEffect, useState } from 'react';
 import Navbar from './Navbar';
 
 export default function Layout() {
   const { user, role, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'light';
-    const saved = localStorage.getItem('theme');
-    if (saved === 'light' || saved === 'dark') return saved;
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    return prefersDark ? 'dark' : 'light';
-  });
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'dark') root.classList.add('dark');
-    else root.classList.remove('dark');
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  function toggleTheme() {
-    setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
-  }
 
   const navigationLinks = [
     { 
@@ -34,6 +18,14 @@ export default function Layout() {
       </svg>,
       isActive: location.pathname === '/dashboard'
     },
+    ...(role === 'admin' ? [{
+      href: '/registrations', 
+      label: 'Registrations',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>,
+      isActive: location.pathname === '/registrations'
+    }] : []),
     { 
       href: '/alumni', 
       label: 'Alumni',

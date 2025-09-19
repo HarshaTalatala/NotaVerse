@@ -5,7 +5,7 @@
       "allowedRoles": ["anonymous"]
     },
     {
-      "route": "/admin/*",
+      "route": "/admin/*", 
       "allowedRoles": ["admin"]
     },
     {

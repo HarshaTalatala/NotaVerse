@@ -3,7 +3,10 @@ import { getIdToken } from 'firebase/auth';
 import { auth } from './firebase';
 
 // Use relative URL to leverage Vite's proxy in development
-const apiBaseUrl = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_BASE_URL || 'https://notaverse-oi7vtkp6x-harshas-projects-3f6f4b88.vercel.app/api');
+// In production on Azure Static Web Apps, use /api (same domain)
+const apiBaseUrl = import.meta.env.DEV 
+  ? '/api' 
+  : (import.meta.env.VITE_API_BASE_URL || '/api');
 const silent = import.meta.env.VITE_API_SILENT === '1';
 
 if (!silent) {

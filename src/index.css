@@ -58,7 +58,99 @@ html:not(.dark) body {
 }
 
 .input {
-  @apply w-full rounded-xl border-2 border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 py-3 text-neutral-900 dark:text-neutral-100 placeholder-neutral-500 dark:placeholder-neutral-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200;
+  @apply w-full rounded-xl border-2 border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 py-3 text-neutral-900 dark:text-neutral-100 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200;
+}
+
+.input-primary {
+  @apply rounded-xl border-2 border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 py-3 text-neutral-900 dark:text-neutral-100 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 placeholder:text-neutral-500 dark:placeholder:text-neutral-400 placeholder:opacity-75;
+  width: 100%;
+}
+
+/* Reset and override all select default styling with maximum specificity */
+select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Enhanced select styling with maximum specificity to override browser defaults */
+select.input-primary,
+select[class*="input-primary"] {
+  width: 100% !important;
+  border-radius: 0.75rem !important;
+  border: 2px solid #d1d5db !important;
+  background-color: white !important;
+  padding: 0.75rem 1rem !important;
+  padding-right: 2.5rem !important;
+  color: #111827 !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+  transition: all 0.2s ease-in-out !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+  background-position: right 0.75rem center !important;
+  background-repeat: no-repeat !important;
+  background-size: 1.25em 1.25em !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  min-height: 48px !important;
+  -webkit-border-radius: 0.75rem !important;
+  -moz-border-radius: 0.75rem !important;
+  box-sizing: border-box !important;
+}
+
+/* Force styling on all select elements regardless of context */
+div select.input-primary,
+form select.input-primary,
+.container select.input-primary,
+* select.input-primary {
+  border-radius: 0.75rem !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  border: 2px solid #d1d5db !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+  background-position: right 0.75rem center !important;
+  background-repeat: no-repeat !important;
+  background-size: 1.25em 1.25em !important;
+  padding-right: 2.5rem !important;
+}
+
+/* Dark mode styles for select with maximum specificity */
+.dark select.input-primary,
+.dark select[class*="input-primary"] {
+  border-color: #374151 !important;
+  background-color: #111827 !important;
+  color: #f9fafb !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%9ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+}
+
+/* Focus states for select with maximum specificity */
+select.input-primary:focus,
+select[class*="input-primary"]:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Input focus states (non-select) */
+input.input-primary:focus,
+textarea.input-primary:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Dark mode dropdown arrow */
+@media (prefers-color-scheme: dark) {
+  select.input-primary,
+  select.input-primary.w-full {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%9ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+  }
+}
+
+.dark select.input-primary,
+.dark select.input-primary.w-full {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%9ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
 }
 
 .badge {

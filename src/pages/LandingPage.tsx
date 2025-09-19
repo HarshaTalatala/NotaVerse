@@ -1,27 +1,10 @@
 // Unified Landing Page
 import { Link } from 'react-router-dom';
+import { useTheme } from '@/contexts/ThemeContext';
 import Navbar from '@/components/Navbar';
-import { useState } from 'react';
 
 export default function LandingPage() {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'light';
-    const saved = localStorage.getItem('theme');
-    if (saved === 'light' || saved === 'dark') return saved;
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    return prefersDark ? 'dark' : 'light';
-  });
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('theme', newTheme);
-  };
+  const { theme, toggleTheme } = useTheme();
 
   const navigationLinks = [
     { href: '#features', label: 'Features' },

@@ -72,7 +72,7 @@ export default function CustomDropdown({
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
           {label}
         </label>
       )}
@@ -84,16 +84,16 @@ export default function CustomDropdown({
           onKeyDown={handleKeyDown}
           disabled={disabled}
           className={`
-            relative w-full px-3 py-2.5 text-left bg-white dark:bg-gray-700 
-            border border-gray-300 dark:border-gray-600 rounded-lg 
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+            relative w-full px-4 py-3 text-left bg-white dark:bg-neutral-900 
+            border-2 border-neutral-300 dark:border-neutral-700 rounded-xl 
+            focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500
             transition-all duration-200 ease-in-out
             ${disabled 
               ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' 
-              : 'hover:border-gray-400 dark:hover:border-gray-500 cursor-pointer'
+              : 'hover:border-primary-400 dark:hover:border-primary-600 cursor-pointer'
             }
             ${isOpen 
-              ? 'ring-2 ring-blue-500 border-blue-500' 
+              ? 'ring-2 ring-primary-500/20 border-primary-500' 
               : ''
             }
           `}
@@ -101,23 +101,23 @@ export default function CustomDropdown({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               {icon && (
-                <div className="flex-shrink-0 text-gray-400 dark:text-gray-500">
+                <div className="flex-shrink-0 text-neutral-400 dark:text-neutral-500">
                   {icon}
                 </div>
               )}
               {selectedOption ? (
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   {selectedOption.icon && (
-                    <div className="flex-shrink-0 text-gray-500 dark:text-gray-400">
+                    <div className="flex-shrink-0 text-neutral-500 dark:text-neutral-400">
                       {selectedOption.icon}
                     </div>
                   )}
-                  <span className="text-gray-900 dark:text-white truncate">
+                  <span className="text-neutral-900 dark:text-neutral-100 truncate">
                     {selectedOption.label}
                   </span>
                 </div>
               ) : (
-                <span className="text-gray-500 dark:text-gray-400 truncate">
+                <span className="text-neutral-500 dark:text-neutral-400 truncate">
                   {placeholder}
                 </span>
               )}
@@ -125,7 +125,7 @@ export default function CustomDropdown({
             
             <div className="flex-shrink-0 ml-2">
               <svg 
-                className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${
+                className={`w-4 h-4 text-neutral-400 dark:text-neutral-500 transition-transform duration-200 ${
                   isOpen ? 'rotate-180' : ''
                 }`} 
                 fill="none" 
@@ -139,12 +139,12 @@ export default function CustomDropdown({
         </button>
 
         {isOpen && (
-          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-hidden">
+          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-neutral-900 border-2 border-neutral-300 dark:border-neutral-700 rounded-xl shadow-lg max-h-60 overflow-hidden">
             {searchable && (
-              <div className="p-2 border-b border-gray-200 dark:border-gray-600">
+              <div className="p-2 border-b border-neutral-200 dark:border-neutral-600">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
@@ -153,7 +153,7 @@ export default function CustomDropdown({
                     placeholder="Search..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-500 dark:placeholder:text-neutral-400"
                     autoFocus
                   />
                 </div>
@@ -162,7 +162,7 @@ export default function CustomDropdown({
 
             <div className="max-h-48 overflow-y-auto">
               {filteredOptions.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 text-center">
+                <div className="px-3 py-2 text-sm text-neutral-500 dark:text-neutral-400 text-center">
                   {searchable ? 'No options found' : 'No options available'}
                 </div>
               ) : (
@@ -173,22 +173,22 @@ export default function CustomDropdown({
                     onClick={() => handleOptionClick(option.value)}
                     className={`
                       w-full px-3 py-2 text-left text-sm transition-colors duration-150
-                      flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-600
+                      flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700
                       ${value === option.value 
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
-                        : 'text-gray-900 dark:text-white'
+                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' 
+                        : 'text-neutral-900 dark:text-neutral-100'
                       }
                     `}
                   >
                     {option.icon && (
-                      <div className="flex-shrink-0 text-gray-500 dark:text-gray-400">
+                      <div className="flex-shrink-0 text-neutral-500 dark:text-neutral-400">
                         {option.icon}
                       </div>
                     )}
                     <span className="truncate">{option.label}</span>
                     {value === option.value && (
                       <div className="flex-shrink-0 ml-auto">
-                        <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       </div>

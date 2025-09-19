@@ -59,7 +59,8 @@ describe('eventsService', () => {
       type: 'workshop',
       organizer: 'Org',
       capacity: 10,
-      tags: ['one']
+      tags: ['one'],
+      imageUrl: null
     });
     expect(id).toBe('new123');
     expect(addDoc).toHaveBeenCalled();

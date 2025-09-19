@@ -69,32 +69,38 @@ export default function AlumniListPage() {
   const addNewAlumni = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newAlumni.name.trim()) { setActionError('Name is required'); return; }
+    if (!newAlumni.name.trim()) { 
+      setActionError('Name is required'); 
+      return; 
+    }
 
     try {
-  setActionError(null);
+      setActionError(null);
 
-      const alumniData = {
+      // Clean data - only include fields that have values (no undefined)
+      const alumniData: any = {
         name: newAlumni.name.trim(),
-        email: newAlumni.email.trim() || undefined,
-        graduationYear: newAlumni.graduationYear ? parseInt(newAlumni.graduationYear) : undefined,
-        company: newAlumni.company.trim() || undefined,
-        title: newAlumni.title.trim() || undefined,
-        location: newAlumni.location.trim() || undefined,
-        linkedIn: newAlumni.linkedIn.trim() || undefined,
-        bio: newAlumni.bio.trim() || undefined,
-        industry: newAlumni.industry.trim() || undefined,
-        skills: newAlumni.skills.trim() ? newAlumni.skills.split(',').map(s => s.trim()) : undefined,
         createdAt: serverTimestamp()
       };
 
-      // Remove undefined values
-      Object.keys(alumniData).forEach(key => 
-        alumniData[key as keyof typeof alumniData] === undefined && delete alumniData[key as keyof typeof alumniData]
-      );
+      // Only add fields that have actual values
+      if (newAlumni.email.trim()) alumniData.email = newAlumni.email.trim();
+      if (newAlumni.graduationYear) alumniData.graduationYear = parseInt(newAlumni.graduationYear);
+      if (newAlumni.company.trim()) alumniData.company = newAlumni.company.trim();
+      if (newAlumni.title.trim()) alumniData.title = newAlumni.title.trim();
+      if (newAlumni.location.trim()) alumniData.location = newAlumni.location.trim();
+      if (newAlumni.linkedIn.trim()) alumniData.linkedIn = newAlumni.linkedIn.trim();
+      if (newAlumni.bio.trim()) alumniData.bio = newAlumni.bio.trim();
+      if (newAlumni.industry.trim()) alumniData.industry = newAlumni.industry.trim();
+      if (newAlumni.skills.trim()) {
+        alumniData.skills = newAlumni.skills.split(',').map(s => s.trim()).filter(Boolean);
+      }
 
-  if (!db) throw new Error('Database not ready');
-  await addDoc(collection(db, 'alumni'), alumniData);
+      if (!db) throw new Error('Database not ready');
+      await addDoc(collection(db, 'alumni'), alumniData);
+      
+      // Close modal immediately after success
+      setShowNewAlumniForm(false);
       
       // Reset form
       setNewAlumni({
@@ -110,7 +116,6 @@ export default function AlumniListPage() {
         skills: ''
       });
       
-      setShowNewAlumniForm(false);
     } catch (error) {
       console.error('Error adding alumni:', error);
       setActionError('Failed to add alumni');
