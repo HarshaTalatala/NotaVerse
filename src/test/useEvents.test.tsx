@@ -4,7 +4,10 @@ import { vi, describe, it, expect } from 'vitest';
 import { useEvents } from '@/hooks/useEvents';
 
 // Vitest mock
-vi.mock('@/services/firebase', () => ({ db: undefined }));
+vi.mock('@/services/firebase', () => ({ 
+  db: undefined, 
+  auth: null 
+}));
 
 describe('useEvents hook', () => {
   it('initializes with empty events when db undefined', () => {

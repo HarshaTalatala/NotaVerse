@@ -22,7 +22,10 @@ vi.mock('firebase/firestore', () => ({
   arrayRemove
 }));
 
-vi.mock('@/services/firebase', () => ({ db: {} }));
+vi.mock('@/services/firebase', () => ({ 
+  db: {}, 
+  auth: { currentUser: { uid: 'test-user-123' } }
+}));
 
 describe('eventsService', () => {
   beforeEach(() => {

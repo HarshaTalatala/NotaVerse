@@ -4,7 +4,10 @@ import { vi, describe, it, expect } from 'vitest';
 import { useAlumni } from '@/hooks/useAlumni';
 
 // Mock firebase service to simulate uninitialized db
-vi.mock('@/services/firebase', () => ({ db: undefined }));
+vi.mock('@/services/firebase', () => ({ 
+  db: undefined, 
+  auth: null 
+}));
 
 describe('useAlumni hook', () => {
   it('initializes with empty alumni when db undefined', () => {
