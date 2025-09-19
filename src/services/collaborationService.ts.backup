@@ -1,0 +1,280 @@
+import { 
+  Vault, 
+  VaultMember,
+  VaultCreateData, 
+  VaultUpdateData,
+  Note, 
+  NoteCreateData, 
+  NoteUpdateData, 
+  NoteSearchFilters,
+  NotesResponse,
+  Comment, 
+  CommentCreateData, 
+  CommentUpdateData,
+  Task, 
+  TaskCreateData, 
+  TaskUpdateData,
+  FileUploadData,
+  FileUploadResponse
+} from '../types/collaboration';
+import api from './api';
+
+// File conversion utility
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to convert file to base64'));
+      }
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+
+// Vault search interface
+export interface VaultSearchFilters {
+  query?: string;
+  tags?: string[];
+  isPublic?: boolean;
+  includePrivate?: boolean;
+  sortBy?: 'name' | 'createdAt' | 'noteCount' | 'memberCount';
+  sortOrder?: 'asc' | 'desc';
+  limit?: number;
+  offset?: number;
+}
+
+export interface VaultSearchResponse {
+  vaults: Vault[];
+  total: number;
+  offset: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export interface AddMemberData {
+  email: string;
+  role: 'contributor' | 'viewer';
+}
+
+export interface UpdateMemberData {
+  role: 'owner' | 'contributor' | 'viewer';
+}
+
+// VAULT API FUNCTIONS
+export const vaultService = {
+  // Get all vaults accessible to the current user
+  async getVaults(): Promise<Vault[]> {
+    const response = await api.get<{ vaults: Vault[] }>('/vaults');
+    return response.data.vaults;
+  },
+
+  // Search and filter vaults
+  async searchVaults(filters: VaultSearchFilters = {}): Promise<VaultSearchResponse> {
+    const response = await api.get<VaultSearchResponse>('/vaults/search', { 
+      params: filters
+    });
+    return response.data;
+  },
+
+  // Get a specific vault by ID
+  async getVault(id: string): Promise<Vault> {
+    const response = await api.get<{ vault: Vault }>(`/vaults?id=${id}`);
+    return response.data.vault;
+  },
+
+  // Create a new vault
+  async createVault(vaultData: VaultCreateData): Promise<Vault> {
+    const response = await api.post<{ vault: Vault }>('/vaults', vaultData);
+    return response.data.vault;
+  },
+
+  // Update a vault
+  async updateVault(id: string, updateData: VaultUpdateData): Promise<Vault> {
+    const response = await api.put<{ vault: Vault }>(`/vaults/${id}`, updateData);
+    return response.data.vault;
+  },
+
+  // Delete a vault
+  async deleteVault(id: string): Promise<void> {
+    await api.delete(`/vaults/${id}`);
+  },
+
+  // Join a public vault
+  async joinVault(id: string): Promise<void> {
+    await api.get(`/vaults?action=join&vaultId=${id}`);
+  },
+
+  // Leave a vault
+  async leaveVault(id: string): Promise<void> {
+    await api.delete(`/vaults?action=leave&vaultId=${id}`);
+  },
+
+  // Member management
+  members: {
+    // Get all members of a vault
+    async getMembers(vaultId: string): Promise<VaultMember[]> {
+      const response = await api.get<{ members: VaultMember[] }>(`/vaults/${vaultId}/members`, { 
+        });
+      return response.data.members;
+    },
+
+    // Add a new member to a vault
+    async addMember(vaultId: string, memberData: AddMemberData): Promise<VaultMember> {
+      const response = await api.post<{ member: VaultMember }>(`/vaults/${vaultId}/members`, memberData, { 
+        });
+      return response.data.member;
+    },
+
+    // Update a member's role
+    async updateMemberRole(vaultId: string, memberId: string, roleData: UpdateMemberData): Promise<void> {
+      await api.put(`/vaults/${vaultId}/members?memberId=${memberId}`, roleData, { 
+        });
+    },
+
+    // Remove a member from a vault
+    async removeMember(vaultId: string, memberId: string): Promise<void> {
+      await api.delete(`/vaults/${vaultId}/members?memberId=${memberId}`, { 
+        });
+    },
+  },
+};
+
+// NOTE API FUNCTIONS
+export const noteService = {
+  // Search and filter notes
+  async getNotes(filters: NoteSearchFilters = {}): Promise<NotesResponse> {
+    const response = await api.get<NotesResponse>('/notes', { params: filters });
+    return response.data;
+  },
+
+  // Get a specific note by ID
+  async getNote(id: string): Promise<Note> {
+    const response = await api.get<{ note: Note }>(`/notes/${id}`);
+    return response.data.note;
+  },
+
+  // Upload a new note with file
+  async createNote(noteData: NoteCreateData): Promise<Note> {
+    let fileData: FileUploadData | undefined;
+    
+    if (noteData.file) {
+      const base64 = await fileToBase64(noteData.file);
+      fileData = {
+        fileName: noteData.file.name,
+        fileType: noteData.file.type,
+        fileData: base64,
+        fileSize: noteData.file.size,
+      };
+      
+      // Upload file first
+      const uploadResponse = await api.post<FileUploadResponse>('/upload/file', fileData);
+      
+      // Add file URL to note data
+      const finalNoteData = {
+        ...noteData,
+        fileUrl: uploadResponse.data.fileUrl,
+        file: undefined, // Remove the file object from the note data
+      };
+      
+      const response = await api.post<{ note: Note }>('/notes', finalNoteData);
+      return response.data.note;
+    } else {
+      const response = await api.post<{ note: Note }>('/notes', noteData);
+      return response.data.note;
+    }
+  },
+
+  // Update a note
+  async updateNote(id: string, updateData: NoteUpdateData): Promise<Note> {
+    const response = await api.put<{ note: Note }>(`/notes/${id}`, updateData);
+    return response.data.note;
+  },
+
+  // Delete a note
+  async deleteNote(id: string): Promise<void> {
+    await api.delete(`/notes/${id}`);
+  },
+};
+
+// COMMENT API FUNCTIONS
+export const commentService = {
+  // Get all comments for a note
+  async getComments(noteId: string): Promise<Comment[]> {
+    const response = await api.get<{ comments: Comment[] }>('/comments', {
+      params: { noteId },
+      });
+    return response.data.comments;
+  },
+
+  // Create a new comment
+  async createComment(commentData: CommentCreateData): Promise<Comment> {
+    const response = await api.post<{ comment: Comment }>('/comments', commentData);
+    return response.data.comment;
+  },
+
+  // Update a comment
+  async updateComment(id: string, updateData: CommentUpdateData): Promise<Comment> {
+    const response = await api.put<{ comment: Comment }>(`/comments/${id}`, updateData);
+    return response.data.comment;
+  },
+
+  // Delete a comment
+  async deleteComment(id: string): Promise<void> {
+    await api.delete(`/comments/${id}`);
+  },
+};
+
+// TASK API FUNCTIONS
+export const taskService = {
+  // Get all tasks for a vault
+  async getTasks(vaultId: string): Promise<Task[]> {
+    try {
+      const response = await api.get<{ tasks: Task[] }>('/tasks', {
+        params: { vaultId },
+      });
+      return response.data.tasks;
+    } catch (error: any) {
+      console.error('[taskService] Failed to fetch tasks:', error.message);
+      if (error.response?.status === 403) {
+        console.error('[taskService] Access denied - check if user is logged in and has vault access');
+      }
+      throw error;
+    }
+  },
+
+  // Get a specific task by ID
+  async getTask(id: string): Promise<Task> {
+    const response = await api.get<{ task: Task }>(`/tasks/${id}`);
+    return response.data.task;
+  },
+
+  // Create a new task
+  async createTask(taskData: TaskCreateData): Promise<Task> {
+    const response = await api.post<{ task: Task }>('/tasks', taskData);
+    return response.data.task;
+  },
+
+  // Update a task
+  async updateTask(id: string, updateData: TaskUpdateData): Promise<Task> {
+    const response = await api.put<{ task: Task }>(`/tasks/${id}`, updateData);
+    return response.data.task;
+  },
+
+  // Delete a task
+  async deleteTask(id: string): Promise<void> {
+    await api.delete(`/tasks/${id}`);
+  },
+};
+
+// FILE API FUNCTIONS
+export const fileService = {
+  // Upload a file
+  async uploadFile(fileData: FileUploadData): Promise<FileUploadResponse> {
+    const response = await api.post<FileUploadResponse>('/upload/file', fileData);
+    return response.data;
+  },
+};

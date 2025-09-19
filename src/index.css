@@ -1,0 +1,174 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+}
+
+html {
+  font-family: 'Inter', system-ui, sans-serif;
+  scroll-behavior: smooth;
+}
+
+html.dark body {
+  @apply bg-neutral-950 text-neutral-100;
+}
+
+html:not(.dark) body {
+  @apply bg-neutral-50 text-neutral-900;
+}
+
+.container {
+  @apply max-w-full mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Professional styling components */
+.link {
+  @apply text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-all duration-200;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none shadow-soft hover:shadow-medium;
+}
+
+.btn-primary {
+  @apply bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 focus:ring-primary-500 active:scale-[0.98] shadow-primary-500/25;
+}
+
+.btn-secondary {
+  @apply bg-gradient-to-r from-secondary-600 to-secondary-700 text-white hover:from-secondary-700 hover:to-secondary-800 focus:ring-secondary-500 active:scale-[0.98];
+}
+
+.btn-outline {
+  @apply border-2 border-neutral-300 hover:border-primary-500 hover:bg-primary-50 text-neutral-700 dark:border-neutral-600 dark:text-neutral-200 dark:hover:border-primary-400 dark:hover:bg-primary-950/50 active:scale-[0.98];
+}
+
+.btn-ghost {
+  @apply hover:bg-neutral-100 text-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-200 active:scale-[0.98];
+}
+
+.card {
+  @apply rounded-2xl border border-neutral-200/60 dark:border-neutral-800/60 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm shadow-soft hover:shadow-medium transition-all duration-300;
+}
+
+.card-elevated {
+  @apply card shadow-medium hover:shadow-strong hover:-translate-y-1;
+}
+
+.input {
+  @apply w-full rounded-xl border-2 border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 py-3 text-neutral-900 dark:text-neutral-100 placeholder-neutral-500 dark:placeholder-neutral-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200;
+}
+
+.badge {
+  @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium;
+}
+
+.badge-primary {
+  @apply badge bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-200;
+}
+
+.badge-success {
+  @apply badge bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200;
+}
+
+.gradient-bg {
+  @apply bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-primary-950/50;
+}
+
+.text-gradient {
+  @apply bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent;
+}
+
+/* Professional animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-100 dark:bg-neutral-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-400 dark:bg-neutral-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-500 dark:bg-neutral-500;
+}
+
+/* Custom placeholder styling */
+.custom-placeholder::placeholder {
+  color: #9CA3AF !important;
+  opacity: 1 !important;
+}
+
+.dark .custom-placeholder::placeholder {
+  color: #6B7280 !important;
+  opacity: 1 !important;
+}
+
+/* Apply to all form inputs - Force override */
+input::placeholder, textarea::placeholder, select::placeholder {
+  color: #9CA3AF !important;
+  opacity: 1 !important;
+}
+
+.dark input::placeholder, 
+.dark textarea::placeholder,
+.dark select::placeholder {
+  color: #6B7280 !important;
+  opacity: 1 !important;
+}
+
+/* Specific overrides for webkit browsers */
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder {
+  color: #9CA3AF !important;
+  opacity: 1 !important;
+}
+
+.dark input::-webkit-input-placeholder,
+.dark textarea::-webkit-input-placeholder {
+  color: #6B7280 !important;
+  opacity: 1 !important;
+}
+
+/* Firefox specific */
+input::-moz-placeholder,
+textarea::-moz-placeholder {
+  color: #9CA3AF !important;
+  opacity: 1 !important;
+}
+
+.dark input::-moz-placeholder,
+.dark textarea::-moz-placeholder {
+  color: #6B7280 !important;
+  opacity: 1 !important;
+}
