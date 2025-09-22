@@ -65,7 +65,7 @@ export const TeamCard: React.FC<TeamCardProps> = ({
 
   return (
     <div
-      className="relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-gray-700/70 p-6 pt-5 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600/50 transition-all duration-200 cursor-pointer group focus-within:ring-2 focus-within:ring-blue-500 outline-none"
+      className="relative bg-white/98 dark:bg-gray-800/98 backdrop-blur-xl rounded-2xl border border-gray-200/80 dark:border-gray-700/60 p-6 shadow-xl shadow-gray-200/40 dark:shadow-gray-900/60 hover:shadow-2xl hover:shadow-gray-300/50 dark:hover:shadow-gray-900/80 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300 ease-out cursor-pointer group focus-within:ring-3 focus-within:ring-blue-500/30 outline-none"
       tabIndex={0}
       aria-label={`Team card for ${team.name}`}
       onClick={(e) => {
@@ -74,22 +74,25 @@ export const TeamCard: React.FC<TeamCardProps> = ({
         if (team.id) navigate(`/teams/${team.id}`);
       }}
     >
-      <div className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 opacity-70 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute inset-x-0 top-0 h-1.5 rounded-t-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 group-hover:from-blue-500 group-hover:via-indigo-500 group-hover:to-purple-500 transition-all duration-300 shadow-md" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-indigo-50/15 to-purple-50/20 dark:from-blue-900/10 dark:via-indigo-900/5 dark:to-purple-900/10 rounded-2xl pointer-events-none opacity-50 group-hover:opacity-70 transition-opacity duration-300" />
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+      <div className="relative flex items-start justify-between mb-5">
+        <div className="flex-1 pr-4">
+          <div className="flex items-center gap-3 mb-3">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors duration-300 leading-tight">
               {team.name}
             </h3>
             {team.isPrivate && (
-              <svg className="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+              <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/40 dark:to-yellow-800/30 shadow-md border border-yellow-200/50 dark:border-yellow-700/30">
+                <svg className="w-3.5 h-3.5 text-yellow-700 dark:text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
             )}
           </div>
           {team.description && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2 leading-snug">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 leading-relaxed">
               {team.description}
             </p>
           )}
@@ -103,7 +106,7 @@ export const TeamCard: React.FC<TeamCardProps> = ({
             aria-haspopup="menu"
             aria-expanded={showMenu}
             aria-label="Open team actions menu"
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="p-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-xl hover:bg-white/90 dark:hover:bg-gray-700/90 backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all duration-200 shadow-md hover:shadow-lg border border-gray-200/50 dark:border-gray-600/30"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -114,7 +117,7 @@ export const TeamCard: React.FC<TeamCardProps> = ({
             <div
               data-menu-panel
               role="menu"
-              className="absolute right-0 mt-2 w-48 bg-white/95 dark:bg-gray-800/95 backdrop-blur rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 py-1 focus:outline-none"
+              className="absolute right-0 mt-3 w-52 bg-white/98 dark:bg-gray-800/98 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/80 dark:border-gray-700/60 z-20 py-2 focus:outline-none animate-in slide-in-from-top-1 duration-200"
             >
               <div className="py-1">
                 {canManage && (
@@ -185,47 +188,52 @@ export const TeamCard: React.FC<TeamCardProps> = ({
 
       {/* Team Tags */}
       {team.tags && team.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-6">
           {team.tags.slice(0, 4).map((tag, index) => (
             <span
               key={index}
-              className="px-2 py-1 text-[10px] font-medium uppercase tracking-wide bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-md border border-indigo-200/60 dark:border-indigo-700/50"
+              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg border border-indigo-200/60 dark:border-indigo-700/50 shadow-sm"
             >
               {tag}
             </span>
           ))}
           {team.tags.length > 4 && (
-            <span className="px-2 py-1 text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-md">+{team.tags.length - 4}</span>
+            <span className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-600">+{team.tags.length - 4}</span>
           )}
         </div>
       )}
 
       {/* Members Section */}
       <div className="mb-5">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-400 uppercase flex items-center">
-            <svg className="w-3.5 h-3.5 mr-1.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 00-5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 0 1 6 0z" /></svg>
-            Members ({team.members.length})
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/30 flex items-center justify-center mr-2 shadow-md border border-blue-200/50 dark:border-blue-700/30">
+              <svg className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 00-5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 0 1 6 0z" />
+              </svg>
+            </div>
+            Team Members ({team.members.length})
           </h4>
           {currentMember && (
-            <span className={`px-2 py-1 text-[10px] font-medium rounded-md shadow-sm ${getRoleColor(currentMember.teamRole)}`}>
+            <span className={`px-3 py-1 text-xs font-medium rounded-lg shadow-md border ${getRoleColor(currentMember.teamRole)}`}>
               {currentMember.teamRole}
             </span>
           )}
         </div>
-        <div className="flex items-center -space-x-2">
+        <div className="flex items-center -space-x-3">
           {team.members.slice(0, 5).map((member: TeamMember, idx) => (
             <div key={member.userId} className="relative group inline-flex">
-              <div className="w-8 h-8 ring-2 ring-white dark:ring-gray-800 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-[10px] font-semibold shadow cursor-default">
+              <div className="w-10 h-10 ring-3 ring-white dark:ring-gray-800 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-lg cursor-default transform group-hover:scale-105 transition-transform duration-200">
                 {getMemberAvatarInitials(member.userName)}
               </div>
-              <div className="absolute z-10 bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900/95 text-white text-[10px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                {member.userName} • {member.teamRole}
+              <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900/95 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap pointer-events-none backdrop-blur-xl border border-gray-700/50">
+                <div className="font-medium">{member.userName}</div>
+                <div className="text-gray-300 text-xs capitalize">{member.teamRole}</div>
               </div>
             </div>
           ))}
           {team.members.length > 5 && (
-            <div className="w-8 h-8 ring-2 ring-white dark:ring-gray-800 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 text-[10px] font-medium shadow">
+            <div className="w-10 h-10 ring-3 ring-white dark:ring-gray-800 bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700 rounded-xl flex items-center justify-center text-gray-700 dark:text-gray-300 text-xs font-bold shadow-lg">
               +{team.members.length - 5}
             </div>
           )}
@@ -233,29 +241,34 @@ export const TeamCard: React.FC<TeamCardProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-3 border-t border-dashed border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-3">
-          <span className="inline-flex items-center">
-            <svg className="w-3.5 h-3.5 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12a8 8 0 11-16 0 8 8 0 0116 0z"/></svg>
+      <div className="flex items-center justify-between pt-5 border-t border-gray-200/80 dark:border-gray-700/80">
+        <div className="flex items-center space-x-4">
+          <span className="inline-flex items-center text-xs text-gray-500 dark:text-gray-400">
+            <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3"/>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12a8 8 0 11-16 0 8 8 0 0116 0z"/>
+            </svg>
             {new Date(team.createdAt).toLocaleDateString()}
           </span>
-          <span className={`px-2 py-0.5 text-[10px] font-medium rounded ${
+          <span className={`px-3 py-1.5 text-xs font-medium rounded-lg shadow-md border ${
             team.isPrivate 
-              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' 
-              : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+              ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 dark:from-yellow-900/40 dark:to-yellow-800/30 dark:text-yellow-300 border-yellow-300/50 dark:border-yellow-700/40' 
+              : 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 dark:from-green-900/40 dark:to-green-800/30 dark:text-green-300 border-green-300/50 dark:border-green-700/40'
           }`}>
             {team.isPrivate ? 'Private' : 'Public'}
           </span>
         </div>
         <Button
-          size="sm"
           onClick={(e) => {
             e.stopPropagation();
             if (team.id) navigate(`/teams/${team.id}`);
           }}
-          className="bg-blue-600/90 hover:bg-blue-700 text-white shadow-sm"
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-2.5 rounded-lg font-medium transform hover:scale-102"
         >
-          Open
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+          Open Team
         </Button>
       </div>
     </div>

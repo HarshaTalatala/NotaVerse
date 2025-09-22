@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { collection, onSnapshot, query, orderBy, limit, where } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { formatShort } from '../utils/date';
+import { useTeams } from '../hooks/useTeams';
 // Collaboration service imports removed - features will be rebuilt later
 // import { vaultService, noteService } from '@/services/collaborationService';
 
@@ -14,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function DashboardPage() {
   const { user, userData, role } = useAuth();
+  const { teams, loading: teamsLoading } = useTeams();
   const [stats, setStats] = useState({
     alumniCount: 0,
     studentsCount: 0,
@@ -21,7 +23,7 @@ export default function DashboardPage() {
     activeEvents: 0,
     newAlumniThisMonth: 0,
     activeStudents: 0,
-    vaultsCount: 0,
+    teamsCount: 0,
     notesCount: 0,
   });
   const [recentAlumni, setRecentAlumni] = useState<any[]>([]);
@@ -82,9 +84,9 @@ export default function DashboardPage() {
     });
     unsubscribers.push(eventsUnsub);
 
-    // Recent alumni (last 5)
+    // Recent alumni (last 3)
     const recentAlumniUnsub = onSnapshot(
-  query(collection(d, 'alumni'), orderBy('createdAt', 'desc'), limit(5)),
+  query(collection(d, 'alumni'), orderBy('createdAt', 'desc'), limit(3)),
       (snap) => {
         setRecentAlumni(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       }
@@ -113,12 +115,25 @@ export default function DashboardPage() {
     // Set default collaboration stats to 0
     setStats(prev => ({
       ...prev,
-      vaultsCount: 0,
+      teamsCount: 0,
       notesCount: 0
     }));
 
     return () => unsubscribers.forEach(unsub => unsub());
   }, []);
+
+  // Update teams count when teams data changes
+  useEffect(() => {
+    if (!teamsLoading && user?.uid) {
+      const userTeams = teams.filter(team => 
+        team.members.some(member => member.userId === user.uid)
+      );
+      setStats(prev => ({
+        ...prev,
+        teamsCount: userTeams.length
+      }));
+    }
+  }, [teams, teamsLoading, user?.uid]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -268,12 +283,12 @@ export default function DashboardPage() {
               }
             />
             <StatCard
-              title="Active Vaults"
-              value={stats.vaultsCount}
+              title="My Teams"
+              value={stats.teamsCount}
               color="purple"
               icon={
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 00-5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 0 1 6 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               }
             />
@@ -294,12 +309,12 @@ export default function DashboardPage() {
         {role === 'student' && (
           <>
             <StatCard
-              title="My Vaults"
-              value={stats.vaultsCount}
+              title="My Teams"
+              value={stats.teamsCount}
               color="purple"
               icon={
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               }
             />
@@ -370,12 +385,12 @@ export default function DashboardPage() {
               }
             />
             <StatCard
-              title="Shared Resources"
-              value={stats.vaultsCount}
+              title="Team Projects"
+              value={stats.teamsCount}
               color="purple"
               icon={
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               }
             />
@@ -482,6 +497,17 @@ export default function DashboardPage() {
                     }
                   />
                   <QuickActionCard
+                    title="Students Directory"
+                    description="Connect with fellow students"
+                    to="/students"
+                    color="green"
+                    icon={
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                      </svg>
+                    }
+                  />
+                  <QuickActionCard
                     title="Events"
                     description="View upcoming events"
                     to="/events"
@@ -560,6 +586,115 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
+
+          {/* Quick Tips */}
+          <div className="bg-gradient-to-br from-amber-50 to-orange-100 dark:from-gray-800 dark:to-gray-700 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <h3 className="text-base font-medium text-gray-900 dark:text-white">Quick Tips</h3>
+              </div>
+              <div className="text-xs text-amber-600 dark:text-amber-400 font-medium">Updated Daily</div>
+            </div>
+            
+            {/* Role-specific tips */}
+            {role === 'student' && (
+              <div className="space-y-2">
+                <div className="bg-white/50 dark:bg-gray-800/50 rounded-md p-3 backdrop-blur-sm">
+                  <div className="flex items-start gap-2">
+                    <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 8 8">
+                        <circle cx="4" cy="4" r="3"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Network Actively</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Connect with {stats.alumniCount} alumni in our directory for career guidance and opportunities.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white/50 dark:bg-gray-800/50 rounded-md p-3 backdrop-blur-sm">
+                  <div className="flex items-start gap-2">
+                    <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 8 8">
+                        <circle cx="4" cy="4" r="3"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Join Study Groups</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Create or join teams to collaborate on projects and share knowledge with peers.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {role === 'alumni' && (
+              <div className="space-y-2">
+                <div className="bg-white/50 dark:bg-gray-800/50 rounded-md p-3 backdrop-blur-sm">
+                  <div className="flex items-start gap-2">
+                    <div className="w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 8 8">
+                        <circle cx="4" cy="4" r="3"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Mentor Students</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Share your experience with {stats.studentsCount} current students and help shape their careers.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white/50 dark:bg-gray-800/50 rounded-md p-3 backdrop-blur-sm">
+                  <div className="flex items-start gap-2">
+                    <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 8 8">
+                        <circle cx="4" cy="4" r="3"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Share Opportunities</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Post job openings and internships to help students kickstart their careers.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {role === 'admin' && (
+              <div className="space-y-2">
+                <div className="bg-white/50 dark:bg-gray-800/50 rounded-md p-3 backdrop-blur-sm">
+                  <div className="flex items-start gap-2">
+                    <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 8 8">
+                        <circle cx="4" cy="4" r="3"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Engage Community</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Foster connections between {stats.studentsCount} students and {stats.alumniCount} alumni through events.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white/50 dark:bg-gray-800/50 rounded-md p-3 backdrop-blur-sm">
+                  <div className="flex items-start gap-2">
+                    <div className="w-4 h-4 bg-indigo-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 8 8">
+                        <circle cx="4" cy="4" r="3"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Monitor Growth</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Track platform usage and organize {stats.eventsCount} upcoming events to boost engagement.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Recent Alumni & Upcoming Events */}
@@ -610,24 +745,24 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className="space-y-3">
-              {stats.vaultsCount > 0 || stats.notesCount > 0 ? (
+              {stats.teamsCount > 0 || stats.notesCount > 0 ? (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white">Active Vaults</p>
+                        <p className="font-medium text-gray-900 dark:text-white">Active Teams</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {stats.vaultsCount} vault{stats.vaultsCount !== 1 ? 's' : ''} created
+                          {stats.teamsCount} team{stats.teamsCount !== 1 ? 's' : ''} joined
                         </p>
                       </div>
                     </div>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400">
-                      {stats.vaultsCount}
+                      {stats.teamsCount}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
@@ -657,7 +792,7 @@ export default function DashboardPage() {
                     </svg>
                   </div>
                   <p className="text-gray-500 dark:text-gray-400 font-medium">Start Collaborating!</p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Create a vault or upload notes to get started</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Join a team or create notes to get started</p>
                 </div>
               )}
             </div>

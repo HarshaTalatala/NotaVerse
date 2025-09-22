@@ -155,15 +155,15 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
+    <div className="h-screen flex flex-col max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="py-6 flex-shrink-0">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Messages</h1>
         <p className="mt-2 text-gray-600 dark:text-gray-400">
           Your conversations with alumni
         </p>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden h-[700px] flex max-w-full">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden flex-1 flex max-w-full mb-6">
         {/* Mobile conversation selector overlay */}
         {selectedConversation && (
           <div className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setSelectedConversation(null)}>
@@ -370,20 +370,35 @@ export default function MessagesPage() {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messagesLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : messagesError ? (
-                  <div className="text-center py-8">
-                    <p className="text-red-600 dark:text-red-400">{messagesError}</p>
-                  </div>
-                ) : messages.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500 dark:text-gray-400">No messages yet</p>
-                  </div>
-                ) : (
+              <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900/30 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500">
+                <div className="max-w-4xl mx-auto px-4 py-6 space-y-2">
+                  {messagesLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Loading messages...</p>
+                      </div>
+                    </div>
+                  ) : messagesError ? (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <p className="text-red-600 dark:text-red-400 font-medium">{messagesError}</p>
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No messages yet</h3>
+                      <p className="text-gray-500 dark:text-gray-400">Start the conversation by sending your first message!</p>
+                    </div>
+                  ) : (
                   messages.map((message, index) => {
                     const isCurrentUser = message.senderId === user?.uid;
                     const isLastMessage = index === messages.length - 1;
@@ -394,8 +409,8 @@ export default function MessagesPage() {
                     return (
                       <div
                         key={message.id}
-                        className={`flex items-end gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'} ${
-                          isConsecutive && !isLastMessage ? 'mb-1' : 'mb-3'
+                        className={`flex items-end gap-3 ${isCurrentUser ? 'justify-end' : 'justify-start'} ${
+                          isConsecutive && !isLastMessage ? 'mb-2' : 'mb-4'
                         }`}
                       >
                         {!isCurrentUser && (
@@ -410,25 +425,25 @@ export default function MessagesPage() {
                           </div>
                         )}
                         
-                        <div className={`group max-w-xs lg:max-w-md ${isCurrentUser ? 'ml-12' : 'mr-12'}`}>
+                        <div className={`group max-w-sm lg:max-w-lg ${isCurrentUser ? 'ml-16' : 'mr-16'}`}>
                           <div
-                            className={`px-4 py-3 rounded-2xl shadow-sm ${
+                            className={`px-4 py-3 rounded-2xl shadow-md transition-all duration-200 hover:shadow-lg ${
                               isCurrentUser
-                                ? 'bg-blue-600 text-white rounded-br-md'
-                                : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 rounded-bl-md'
+                                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-br-md'
+                                : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 rounded-bl-md hover:bg-gray-50 dark:hover:bg-gray-650'
                             } ${isConsecutive && !isLastMessage ? (isCurrentUser ? 'rounded-br-2xl' : 'rounded-bl-2xl') : ''}`}
                           >
                             {!isCurrentUser && !isConsecutive && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">
+                              <p className="text-xs text-gray-600 dark:text-gray-300 mb-2 font-semibold">
                                 {message.senderName}
                               </p>
                             )}
-                            <p className="text-sm leading-relaxed break-words">{message.content}</p>
-                            <div className="flex items-center justify-between mt-2">
+                            <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{message.content}</p>
+                            <div className="flex items-center justify-between mt-3">
                               <p
-                                className={`text-xs ${
+                                className={`text-xs font-medium ${
                                   isCurrentUser
-                                    ? 'text-blue-100'
+                                    ? 'text-blue-100 opacity-80'
                                     : 'text-gray-500 dark:text-gray-400'
                                 }`}
                               >
@@ -453,22 +468,23 @@ export default function MessagesPage() {
                       </div>
                     );
                   })
-                )}
-                <div ref={messagesEndRef} />
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
               </div>
 
               {/* Message Input */}
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+              <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
                 {/* Emoji Picker */}
                 {showEmojiPicker && (
-                  <div className="mb-3 p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 shadow-lg">
-                    <div className="grid grid-cols-10 gap-2">
+                  <div className="mb-4 p-4 bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 shadow-xl">
+                    <div className="grid grid-cols-10 gap-1">
                       {commonEmojis.map((emoji) => (
                         <button
                           key={emoji}
                           type="button"
                           onClick={() => handleEmojiClick(emoji)}
-                          className="text-lg hover:bg-gray-100 dark:hover:bg-gray-600 rounded p-1 transition-colors"
+                          className="text-xl hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg p-2 transition-all duration-200 hover:scale-110"
                         >
                           {emoji}
                         </button>
@@ -477,12 +493,16 @@ export default function MessagesPage() {
                   </div>
                 )}
                 
-                <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                <form onSubmit={handleSendMessage} className="flex items-end gap-3">
                   {/* Emoji Button */}
                   <button
                     type="button"
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    className={`p-3 rounded-full transition-all duration-200 hover:scale-105 ${
+                      showEmojiPicker 
+                        ? 'text-blue-600 bg-blue-100 dark:bg-blue-900/30' 
+                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
                     title="Add emoji"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -503,7 +523,7 @@ export default function MessagesPage() {
                           handleSendMessage(e);
                         }
                       }}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 pr-12 resize-none"
+                      className="w-full px-5 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 pr-12 transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg"
                       placeholder="Type a message..."
                       disabled={sending}
                       maxLength={1000}
@@ -523,7 +543,11 @@ export default function MessagesPage() {
                   <button
                     type="submit"
                     disabled={sending || !newMessage.trim()}
-                    className="p-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-2xl transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-105 disabled:transform-none"
+                    className={`p-3.5 rounded-full transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none ${
+                      newMessage.trim()
+                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+                        : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    }`}
                     title={sending ? 'Sending...' : 'Send message'}
                   >
                     {sending ? (
@@ -537,18 +561,26 @@ export default function MessagesPage() {
                 </form>
                 
                 {/* Quick Actions */}
-                <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex items-center justify-between mt-3 text-xs text-gray-500 dark:text-gray-400">
                   <div className="flex items-center gap-4">
-                    <span>Press Enter to send</span>
+                    <span className="flex items-center gap-1">
+                      <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">Enter</kbd>
+                      to send
+                    </span>
                     {isTyping && (
-                      <span className="flex items-center gap-1">
-                        <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></div>
-                        Typing...
+                      <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                        <div className="flex gap-1">
+                          <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce"></div>
+                          <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                          <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                        </div>
+                        You are typing...
                       </span>
                     )}
                   </div>
                   {onlineUsers.has(selectedConversation.alumniId) && (
-                    <span className="text-green-600 dark:text-green-400">
+                    <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400 font-medium">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                       {selectedConversation.alumniName.split(' ')[0]} is online
                     </span>
                   )}
