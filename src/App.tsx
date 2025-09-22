@@ -12,6 +12,8 @@ import RegistrationsPage from './pages/RegistrationsPage';
 import AdminCleanupPage from './pages/AdminCleanupPage';
 import EnhancedCollaborationHubPage from './pages/EnhancedCollaborationHubPage';
 import TeamWorkspacePage from './pages/TeamWorkspacePage';
+import MessagesPage from './pages/MessagesPage';
+import AlumniMessagesPage from './pages/AlumniMessagesPage';
 import Layout from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -41,6 +43,8 @@ export default function App() {
           <Route path="/students" element={<ProtectedRoute requiredRoles={['admin','alumni','student']}> <StudentsPage /> </ProtectedRoute>} />
           <Route path="/students/:id" element={<ProtectedRoute requiredRoles={['admin','alumni','student']}> <StudentProfilePage /> </ProtectedRoute>} />
           <Route path="/events" element={<EventsPage />} />
+          <Route path="/messages" element={<ProtectedRoute requiredRoles={['student']}> <MessagesPage /> </ProtectedRoute>} />
+          <Route path="/alumni-messages" element={<ProtectedRoute requiredRoles={['alumni']}> <AlumniMessagesPage /> </ProtectedRoute>} />
         </Route>
         
         <Route path="*" element={<Navigate to="/" replace />} />

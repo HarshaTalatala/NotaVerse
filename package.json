@@ -22,6 +22,7 @@
     "@azure/storage-blob": "^12.28.0",
     "axios": "^1.7.7",
     "buffer": "^6.0.3",
+    "date-fns": "^4.1.0",
     "dotenv": "^17.2.2",
     "firebase": "^10.14.1",
     "multer": "^2.0.2",

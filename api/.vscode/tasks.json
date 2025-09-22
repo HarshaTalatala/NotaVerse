@@ -1,0 +1,28 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Azure Functions: Start Local",
+			"type": "shell",
+			"command": "func start",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build TypeScript",
+			"type": "shell",
+			"command": "npm run build",
+			"group": "build",
+			"problemMatcher": ["$tsc"]
+		},
+		{
+			"label": "Watch TypeScript",
+			"type": "shell",
+			"command": "npm run watch",
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": ["$tsc-watch"]
+		}
+	]
+}

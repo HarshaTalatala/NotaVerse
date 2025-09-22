@@ -1,0 +1,29 @@
+{
+  "version": 1.1,
+  "atDirectives": [
+    {
+      "name": "@tailwind",
+      "description": "Tailwind CSS directive to inject base, components, utilities, or variants styles"
+    },
+    {
+      "name": "@apply",
+      "description": "Tailwind CSS directive to apply utility classes inline"
+    },
+    {
+      "name": "@layer",
+      "description": "Tailwind CSS directive to add styles to a specific layer"
+    },
+    {
+      "name": "@responsive",
+      "description": "Tailwind CSS directive to generate responsive variants"
+    },
+    {
+      "name": "@screen",
+      "description": "Tailwind CSS directive to apply styles at specific breakpoints"
+    },
+    {
+      "name": "@variants",
+      "description": "Tailwind CSS directive to generate variants"
+    }
+  ]
+}

@@ -145,3 +145,48 @@ export interface PaginatedResponse<T> {
     totalPages: number;
   };
 }
+
+// Messaging Types
+export interface Message {
+  id?: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: Role;
+  receiverId: string;
+  receiverName: string;
+  receiverRole: Role;
+  content: string;
+  isRead: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+export interface Conversation {
+  id?: string;
+  studentId: string;
+  studentName: string;
+  alumniId: string;
+  alumniName: string;
+  lastMessage?: string;
+  lastMessageDate?: Date;
+  lastMessageSender?: string;
+  unreadCount: number;
+  status: 'active' | 'archived' | 'blocked';
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+export interface ContactRequest {
+  id?: string;
+  studentId: string;
+  studentName: string;
+  studentEmail?: string;
+  alumniId: string;
+  alumniName: string;
+  subject: string;
+  message: string;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: Date;
+  respondedAt?: Date;
+}
