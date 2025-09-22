@@ -37,10 +37,15 @@ describe('eventsService', () => {
   it('rejects invalid createEvent payload', async () => {
     (globalThis as any).CURRENT_USER_ID = 'user1';
     const { createEvent } = await import('@/services/eventsService');
+    
+    // Use a future date to avoid "Event date cannot be in the past" error
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 1);
+    
     await expect(createEvent({
       title: 'Hi', // too short < 3? (schema min 3) intentionally borderline length; adjust to cause failure
       description: 'short', // <10
-      date: new Date(),
+      date: futureDate,
       location: '',
       type: 'networking',
       organizer: 'Org'
@@ -51,10 +56,15 @@ describe('eventsService', () => {
   it('creates valid event', async () => {
     (globalThis as any).CURRENT_USER_ID = 'user1';
     const { createEvent } = await import('@/services/eventsService');
+    
+    // Use a future date
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 1);
+    
     const id = await createEvent({
       title: 'Valid Title',
       description: 'This is a sufficiently long description',
-      date: new Date(),
+      date: futureDate,
       location: 'Hall',
       type: 'workshop',
       organizer: 'Org',
