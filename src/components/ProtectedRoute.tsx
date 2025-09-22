@@ -13,13 +13,35 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, requiredRoles, fallback }: ProtectedRouteProps) {
   const { user, role, loading } = useAuth();
   const location = useLocation();
-  if (loading) return <AuthLoading />;
-  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
+  
+  // Add debugging for teams page access
+  console.log('🔍 ProtectedRoute CHECK:', {
+    pathname: location.pathname,
+    user: user ? { uid: user.uid, email: user.email } : null,
+    role,
+    loading,
+    requiredRoles,
+    timestamp: new Date().toISOString()
+  });
+  
+  if (loading) {
+    console.log('🔍 ProtectedRoute: Still loading, showing auth loading');
+    return <AuthLoading />;
+  }
+  
+  if (!user) {
+    console.log('🔍 ProtectedRoute: No user, redirecting to login');
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
   if (requiredRoles && requiredRoles.length && (!role || !requiredRoles.includes(role))) {
+    console.log('🔍 ProtectedRoute: Role check failed, showing forbidden');
     return (
       fallback || <ForbiddenPage required={requiredRoles} current={role} />
     );
   }
+  
+  console.log('🔍 ProtectedRoute: Access granted, rendering children');
   return <>{children}</>;
 }
 

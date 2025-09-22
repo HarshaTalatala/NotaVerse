@@ -10,11 +10,14 @@ import StudentProfilePage from './pages/StudentProfilePage';
 import EventsPage from './pages/EventsPage';
 import RegistrationsPage from './pages/RegistrationsPage';
 import AdminCleanupPage from './pages/AdminCleanupPage';
+import EnhancedCollaborationHubPage from './pages/EnhancedCollaborationHubPage';
+import TeamWorkspacePage from './pages/TeamWorkspacePage';
 import Layout from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ui/ErrorBoundary';
+import { AzureTestPage } from './components/AzureTestPage2';
 
 export default function App() {
   return (
@@ -29,6 +32,8 @@ export default function App() {
         {/* Protected Routes */}
         <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/collaboration" element={<EnhancedCollaborationHubPage />} />
+          <Route path="/teams/:teamId" element={<TeamWorkspacePage />} />
           <Route path="/registrations" element={<ProtectedRoute requiredRoles={['admin']}> <RegistrationsPage /> </ProtectedRoute>} />
           <Route path="/admin/cleanup" element={<ProtectedRoute requiredRoles={['admin']}> <AdminCleanupPage /> </ProtectedRoute>} />
           <Route path="/alumni" element={<AlumniListPage />} />

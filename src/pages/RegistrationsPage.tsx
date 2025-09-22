@@ -122,6 +122,8 @@ export default function RegistrationsPage() {
     setError(null); // Clear any previous errors
     
     try {
+      console.log('🔍 Starting approval process for:', registration.email);
+      
       // Check role-specific collections for existing data
       if (registration.role === 'student') {
         const studentsQuery = query(collection(db, 'students'), where('email', '==', registration.email));
@@ -139,6 +141,8 @@ export default function RegistrationsPage() {
         }
       }
 
+      console.log('✅ No existing records found, will create Firebase account on first login...');
+      
       // Create role-specific profile document immediately (without Firebase Auth account yet)
       // We'll use the email as a temporary ID and update with UID when they sign up
       const tempId = registration.email.replace(/[.@]/g, '_'); // Firebase-safe ID
@@ -185,6 +189,7 @@ export default function RegistrationsPage() {
         }
 
         await setDoc(doc(db, 'students', tempId), studentData);
+        console.log('✅ Student profile created with tempId:', tempId);
       } else if (registration.role === 'alumni') {
         const alumniData: any = {
           name: registration.name,
@@ -226,15 +231,16 @@ export default function RegistrationsPage() {
         }
 
         await setDoc(doc(db, 'alumni', tempId), alumniData);
+        console.log('✅ Alumni profile created with tempId:', tempId);
       }
 
-      // Update registration status to approved
+      // Update registration status to approved (Firebase account will be created on first login)
       await updateDoc(doc(db, 'pendingRegistrations', registration.id), {
         status: 'approved',
         reviewedAt: serverTimestamp(),
         reviewedBy: auth.currentUser?.email,
         tempDocId: tempId,
-        approvalNote: 'Registration approved. Profile created and ready for account activation.'
+        approvalNote: 'Registration approved. Firebase account will be created automatically on first login.'
       });
 
       console.log('✅ Registration approved and profile created successfully for:', registration.email);

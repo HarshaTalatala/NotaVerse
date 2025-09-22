@@ -1,16 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import Navbar from '@/components/Navbar';
 
 export default function LoginPage() {
-  const { signInEmail, signInGoogle } = useAuth();
+  const { signInEmail, signInGoogle, authError, logout } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionLockRef = useRef<boolean>(false);
+  const hasSubmittedRef = useRef<boolean>(false); // Permanent lock
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation() as any;
@@ -27,15 +30,78 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent event bubbling
+    
+    console.log('🎯 handleSubmit called - hasSubmitted:', hasSubmittedRef.current, 'loading:', loading, 'isSubmitting:', isSubmitting);
+    
+    // Permanent submission check - once submitted, never allow again
+    if (hasSubmittedRef.current) {
+      console.log('🚫 PERMANENT BLOCK: Form has already been submitted successfully');
+      return;
+    }
+    
+    // Component-level submission lock using ref (persists across re-renders)
+    if (submissionLockRef.current) {
+      console.log('🔒 Submission blocked by component lock');
+      return;
+    }
+    
+    // Prevent double submission with multiple checks
+    if (loading || isSubmitting) {
+      console.log('🔄 Form submission blocked - already processing');
+      return;
+    }
+    
+    // Set ALL locks immediately
+    hasSubmittedRef.current = true; // Permanent lock
+    submissionLockRef.current = true;
     setLoading(true);
+    setIsSubmitting(true);
     setError(null);
+    
+    // Add a micro-delay to handle rapid double clicks/submissions
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
     try {
+      console.log('🚀 LoginPage: Starting sign-in process for:', email);
       await signInEmail(email, password);
-      navigate(from, { replace: true });
+      console.log('✅ LoginPage: Sign-in completed successfully, navigating...');
+      
+      // Add a small delay to ensure auth state is settled
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 100);
+      
     } catch (err: any) {
-      setError(err.message);
+      console.error('Sign-in error:', err);
+      
+      // Provide user-friendly error messages
+      let errorMessage = err.message;
+      
+      if (err.code === 'auth/invalid-credential') {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (err.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email. Please check your email or register for a new account.';
+      } else if (err.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later or reset your password.';
+      } else if (err.code === 'auth/user-disabled') {
+        errorMessage = 'This account has been disabled. Please contact support.';
+      } else if (!errorMessage || errorMessage.includes('Firebase:')) {
+        // Fallback for generic Firebase errors
+        errorMessage = 'Sign-in failed. Please check your credentials and try again.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
+      // Only release temporary lock on error, keep permanent lock on success
+      if (error) {
+        hasSubmittedRef.current = false; // Allow retry on error
+      }
+      submissionLockRef.current = false;
     }
   };
 
@@ -46,7 +112,16 @@ export default function LoginPage() {
       await signInGoogle();
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message);
+      console.error('Google sign-in error:', err);
+      
+      // The Google sign-in method in AuthContext already provides user-friendly messages
+      let errorMessage = err.message;
+      
+      if (!errorMessage || errorMessage.includes('Firebase:')) {
+        errorMessage = 'Google sign-in failed. Please try again.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -83,7 +158,10 @@ export default function LoginPage() {
                 className="input-primary"
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError(null);
+                }}
               />
             </div>
 
@@ -98,11 +176,14 @@ export default function LoginPage() {
                 className="input-primary"
                 placeholder="Enter your password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError(null);
+                }}
               />
             </div>
 
-            {successMessage && (
+            {(successMessage) && (
               <div className="rounded-xl bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800 p-4">
                 <div className="flex items-center">
                   <svg className="h-5 w-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,23 +194,46 @@ export default function LoginPage() {
               </div>
             )}
 
-            {error && (
+            {(error || authError) && (
               <div className="rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 p-4">
                 <div className="flex items-center">
                   <svg className="h-5 w-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="text-sm text-red-600 dark:text-red-400">{error}</span>
+                  <span className="text-sm text-red-600 dark:text-red-400">{error || authError}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Help message for users with approved registrations */}
+            {(error || authError) && (error || authError)?.includes('approved') && (
+              <div className="rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 p-4 mt-2">
+                <div className="flex items-start">
+                  <svg className="h-5 w-5 text-blue-400 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="text-sm text-blue-600 dark:text-blue-400">
+                    <p className="font-medium mb-1">Account Activation</p>
+                    <p>Your registration has been approved! Sign in with your original registration credentials (email and password) to activate your account.</p>
+                  </div>
                 </div>
               </div>
             )}
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isSubmitting || hasSubmittedRef.current}
               className="w-full btn btn-primary text-base py-3"
+              onClick={(e) => {
+                // Additional protection against double clicks
+                if (loading || isSubmitting || hasSubmittedRef.current) {
+                  e.preventDefault();
+                  console.log('🔄 Button click blocked - form already submitted or processing');
+                  return;
+                }
+              }}
             >
-              {loading ? (
+              {(loading || isSubmitting) ? (
                 <div className="flex items-center justify-center">
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -178,7 +282,6 @@ export default function LoginPage() {
               </Link>
             </p>
           </div>
-
 
           </div>
         </div>

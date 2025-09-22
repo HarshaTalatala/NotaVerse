@@ -11,33 +11,35 @@ service cloud.firestore {
     }
     
     // Allow unauthenticated writes to pendingRegistrations for user registration
-    // Allow admins to read/update/delete pending registrations
+    // Allow admins to read/update/delete pending registrations  
+    // Allow unauthenticated reads for sign-in flow (users checking their registration status)
     match /pendingRegistrations/{document} {
       allow create: if true; // Allow anyone to submit registration
-      allow read, update, delete: if isAdmin();
+      allow read: if true; // Allow reading for sign-in flow - we'll validate email match in app logic
+      allow update, delete: if isAdmin();
     }
     
     // Users collection - only authenticated users can read their own data
     // Admins can read all user data
+    // Users can create their own user document during account recovery
     match /users/{userId} {
       allow read: if request.auth != null && 
         (request.auth.uid == userId || isAdmin());
-      allow write: if isAdmin();
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update, delete: if isAdmin();
     }
     
-    // Students collection - authenticated users can read their own data
+    // Students collection - authenticated users can read all student data
     // Admins can read/write all student data
     match /students/{studentId} {
-      allow read: if request.auth != null && 
-        (request.auth.uid == studentId || isAdmin());
+      allow read: if request.auth != null;
       allow write: if isAdmin();
     }
     
-    // Alumni collection - authenticated users can read their own data
+    // Alumni collection - authenticated users can read all alumni data
     // Admins can read/write all alumni data
     match /alumni/{alumniId} {
-      allow read: if request.auth != null && 
-        (request.auth.uid == alumniId || isAdmin());
+      allow read: if request.auth != null;
       allow write: if isAdmin();
     }
     
@@ -56,6 +58,90 @@ service cloud.firestore {
       allow read: if request.auth != null && 
         (request.auth.uid == resource.data.userId || isAdmin());
       allow update, delete: if isAdmin();
+    }
+    
+    // Collaboration Hub Collections
+    
+    // Notes collection - users can read/write their own notes and public notes
+    // Team members can read/write shared notes
+    match /notes/{noteId} {
+      allow read: if request.auth != null && (
+        resource.data.authorId == request.auth.uid ||
+        resource.data.isPublic == true ||
+        isAdmin()
+      );
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.authorId;
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.authorId ||
+        isAdmin()
+      );
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.authorId ||
+        isAdmin()
+      );
+    }
+    
+    // Teams collection - authenticated users can create teams
+    // Team members can read team data
+    match /teams/{teamId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.createdBy ||
+        isAdmin()
+      );
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.createdBy;
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.createdBy ||
+        isAdmin()
+      );
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.createdBy ||
+        isAdmin()
+      );
+    }
+    
+    // Activities collection - authenticated users can read their activities
+    // Users can create activities for their actions
+    match /activities/{activityId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        isAdmin()
+      );
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+      allow update, delete: if isAdmin();
+    }
+    
+    // Comments collection - authenticated users can read/create comments
+    // Comment authors can update/delete their comments
+    match /comments/{commentId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.authorId;
+      allow update, delete: if request.auth != null && (
+        request.auth.uid == resource.data.authorId ||
+        isAdmin()
+      );
+    }
+    
+    // Files collection - authenticated users can upload/access files
+    match /files/{fileId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.uploadedBy ||
+        resource.data.isPublic == true ||
+        isAdmin()
+      );
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.uploadedBy;
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.uploadedBy ||
+        isAdmin()
+      );
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.uploadedBy ||
+        isAdmin()
+      );
     }
     
     // Default deny all other documents

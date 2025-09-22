@@ -12,5 +12,13 @@
     "id": "Microsoft.Azure.Functions.ExtensionBundle",
     "version": "[4.*, 5.0.0)"
   },
-  "functionTimeout": "00:05:00"
+  "functionTimeout": "00:05:00",
+  "cors": {
+    "supportCredentials": true,
+    "allowedOrigins": [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "https://localhost:5173"
+    ]
+  }
 }
