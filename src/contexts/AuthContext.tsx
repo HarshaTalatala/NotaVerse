@@ -77,8 +77,18 @@ function requireDb() {
 
 type Role = 'admin' | 'alumni' | 'student'; // Keep admin for internal use, but not exposed in registration
 
+type UserData = {
+  name: string;
+  displayName: string;
+  email: string;
+  role: Role;
+  isApproved: boolean;
+  createdAt: any;
+}
+
 type AuthContextValue = {
   user: User | null;
+  userData: UserData | null;
   role: Role | null;
   loading: boolean;
   signInEmail: (email: string, password: string) => Promise<void>;
@@ -93,6 +103,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState(true);
   const timeoutRef = useRef<number | null>(null);
@@ -225,6 +236,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // TEMPORARY: Don't sign out, just show warning
                 setAuthError('Your account is pending approval. Some features may be limited.');
                 setUser(u);
+                setUserData({
+                  name: userData.name || userData.displayName || userData.email?.split('@')[0] || 'User',
+                  displayName: userData.displayName || userData.name || userData.email?.split('@')[0] || 'User',
+                  email: userData.email,
+                  role: userData.role,
+                  isApproved: userData.isApproved,
+                  createdAt: userData.createdAt
+                });
                 setRole((userData.role as Role) || null);
                 // User exists but not approved - sign them out
                 // const a = requireAuth();
@@ -235,6 +254,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               } else {
                 console.log('✅ User approved, setting user state');
                 setUser(u);
+                setUserData({
+                  name: userData.name || userData.displayName || userData.email?.split('@')[0] || 'User',
+                  displayName: userData.displayName || userData.name || userData.email?.split('@')[0] || 'User',
+                  email: userData.email,
+                  role: userData.role,
+                  isApproved: userData.isApproved,
+                  createdAt: userData.createdAt
+                });
                 setRole((userData.role as Role) || null);
                 // Clear any previous auth errors on successful login
                 setAuthError(null);
@@ -419,11 +446,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } else {
           setUser(null);
+          setUserData(null);
           setRole(null);
         }
       } catch (e: any) {
         setAuthError(e.message || 'Failed to complete authentication.');
         setUser(null);
+        setUserData(null);
         setRole(null);
       } finally {
         setLoading(false);
@@ -962,6 +991,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (useMockFirebase) {
       console.log('🔧 [auth] Mock mode: logout (clearing local state only)');
       setUser(null);
+      setUserData(null);
       setRole(null);
       setAuthError(null);
       return;
@@ -970,6 +1000,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const a = requireAuth();
     await signOut(a);
     setUser(null);
+    setUserData(null);
     setRole(null);
     setAuthError(null);
   };
@@ -978,6 +1009,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(() => ({ 
     user, 
+    userData,
     role, 
     loading, 
     signInEmail, 
@@ -986,7 +1018,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInGoogle, 
     logout, 
     authError
-  }), [user, role, loading, authError]);
+  }), [user, userData, role, loading, authError]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

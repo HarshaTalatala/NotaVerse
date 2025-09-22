@@ -13,7 +13,7 @@ function requireDb() {
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function DashboardPage() {
-  const { user, role } = useAuth();
+  const { user, userData, role } = useAuth();
   const [stats, setStats] = useState({
     alumniCount: 0,
     studentsCount: 0,
@@ -197,7 +197,7 @@ export default function DashboardPage() {
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 rounded-xl p-6 text-white">
         <h1 className="text-2xl font-bold">
-          {getGreeting()}, {user?.displayName || user?.email?.split('@')[0]}!
+          {getGreeting()}, {userData?.name || userData?.displayName || user?.displayName || user?.email?.split('@')[0]}!
         </h1>
         <p className="text-blue-100 mt-2">
           Welcome to your NotaVerse dashboard. Here's what's happening today.
