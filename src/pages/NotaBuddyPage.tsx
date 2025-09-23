@@ -31,6 +31,11 @@ const NotaBuddyPage: React.FC = () => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [backendStatus, setBackendStatus] = useState<{
+    backendAvailable: boolean;
+    aiConfigured: boolean;
+    message: string;
+  } | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -39,6 +44,23 @@ const NotaBuddyPage: React.FC = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Check backend status on mount
+  useEffect(() => {
+    const checkBackendStatus = async () => {
+      const status = await NotaBuddyService.getBackendStatus();
+      setBackendStatus(status);
+      
+      // Add status message to chat if there are issues
+      if (!status.backendAvailable) {
+        addMessage('system', `⚠️ Backend Connection: ${status.message}`);
+      } else if (!status.aiConfigured) {
+        addMessage('system', `ℹ️ AI Status: ${status.message}`);
+      }
+    };
+
+    checkBackendStatus();
+  }, []);
 
   // Generate unique ID for messages
   const generateId = () => Math.random().toString(36).substr(2, 9);

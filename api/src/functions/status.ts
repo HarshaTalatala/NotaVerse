@@ -1,5 +1,6 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { storage } from '../utils/storage';
+import { geminiService } from '../utils/aiService';
 
 /**
  * Azure Function: Health check and storage status
@@ -41,8 +42,13 @@ export async function getStatus(request: HttpRequest, context: InvocationContext
             uptime: process.uptime(),
             memoryUsage: process.memoryUsage(),
             environment: {
-                hasGeminiKey: !!process.env.GEMINI_API_KEY,
+                hasGeminiKey: !!process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_google_gemini_api_key_here',
+                geminiConfigured: geminiService.isAIConfigured(),
                 functionsRuntime: process.env.FUNCTIONS_WORKER_RUNTIME || 'unknown'
+            },
+            aiService: {
+                status: geminiService.getConfigurationStatus(),
+                configured: geminiService.isAIConfigured()
             }
         };
 
