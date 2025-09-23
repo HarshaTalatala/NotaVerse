@@ -1,6 +1,11 @@
 // Note: Install @google/generative-ai package first: npm install @google/generative-ai
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// Load environment variables from .env file in development
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
+}
+
 /**
  * Google Gemini AI service for text processing
  */
