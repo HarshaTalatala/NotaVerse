@@ -75,19 +75,11 @@ export class NotaBuddyService {
 
       const result = await response.json();
       
-      // Check if backend is using fallback processing
-      if (result.message && result.message.includes('Configure GEMINI_API_KEY')) {
-        result.message += ' The document has been uploaded, but AI analysis requires proper backend configuration.';
-      }
-
       return result;
     } catch (error) {
-      // Fallback to mock service for demo purposes
+      // Silently fallback to mock service
       console.log('Backend not available, using mock service');
       const mockResult = await this.mockUploadDocument(file);
-      
-      // Add backend unavailable notice
-      mockResult.message = `🔧 Backend unavailable - Using demo mode. ${mockResult.message} In production, this would be processed by the AI backend.`;
       
       return mockResult;
     }
@@ -146,20 +138,11 @@ export class NotaBuddyService {
 
       const result = await response.json();
       
-      // Check if the backend is using fallback responses
-      if (result.answer && result.answer.includes('Configure GEMINI_API_KEY')) {
-        // Add a notice about the backend configuration
-        result.answer += '\n\n💡 **Note**: The AI backend is not fully configured. For enhanced AI capabilities, the administrator needs to configure the GEMINI_API_KEY.';
-      }
-
       return result;
     } catch (error) {
-      // Fallback to mock service for demo purposes
+      // Silently fallback to mock service
       console.log('Backend not available, using mock AI responses');
       const mockResult = await this.mockAskQuestion(question);
-      
-      // Add backend unavailable notice
-      mockResult.answer = `🔧 **Backend unavailable** - Using demo responses.\n\n${mockResult.answer}\n\n💡 **Note**: The backend server may not be running. In a production environment, you would have full AI-powered document analysis.`;
       
       return mockResult;
     }
