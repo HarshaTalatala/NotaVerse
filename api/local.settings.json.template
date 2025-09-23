@@ -1,0 +1,14 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "WEBSITE_NODE_DEFAULT_VERSION": "~18",
+    "GEMINI_API_KEY": "your_google_gemini_api_key_here"
+  },
+  "Host": {
+    "LocalHttpPort": 7071,
+    "CORS": "*",
+    "CORSCredentials": false
+  }
+}

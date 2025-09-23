@@ -1,41 +1,122 @@
-# NotaVerse Backend API
+# NotaVerse Azure Functions Backend
 
-Azure Functions backend for the NotaVerse application, providing REST APIs for student management, alumni connections, and events management.
+A hackathon-ready Azure Functions backend that provides AI-powered document processing and Q&A capabilities for NotaBuddy using Google Gemini 2.5 Pro.
 
 ## Features
 
-- **Student Management**: CRUD operations for student profiles
-- **Alumni Management**: CRUD operations for alumni profiles with career information
-- **Events Management**: CRUD operations for events with registration functionality
+- **Document Upload** (`POST /api/upload`): Upload PDF, TXT, or DOCX files
+- **AI Q&A** (`POST /api/ask`): Ask questions about uploaded documents
+- **In-memory storage** for fast demo performance
+- **Text extraction** from multiple file formats
+- **Intelligent chunking** (~500 words per chunk)
+- **AI-powered summaries** using Google Gemini 2.5 Pro
+- **Contextual search** and answer generation
 - **CORS Support**: Configured for frontend integration
 - **TypeScript**: Full TypeScript support with type definitions
-- **Validation**: Request validation and error handling
-- **Pagination**: Built-in pagination for list endpoints
-- **Search**: Search functionality across all entities
+
+## Quick Setup
+
+### 1. Install Dependencies
+```bash
+cd api
+npm install
+```
+
+### 2. Setup Environment Variables
+
+Copy the template and add your API key:
+```bash
+cp local.settings.json.template local.settings.json
+```
+
+Edit `local.settings.json` and add your Google Gemini API key:
+```json
+{
+  "Values": {
+    "GEMINI_API_KEY": "your_actual_api_key_here"
+  }
+}
+```
+
+### 3. Get Google Gemini API Key
+
+1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Create a new API key
+3. Copy the key to your `local.settings.json`
+
+### 4. Run Locally
+```bash
+npm run start
+```
+
+The functions will be available at:
+- Upload: `http://localhost:7071/api/upload`
+- Ask: `http://localhost:7071/api/ask`
 
 ## API Endpoints
 
-### Students
-- `GET /api/students` - Get all students (paginated, searchable)
-- `GET /api/students/{id}` - Get student by ID
-- `POST /api/students` - Create new student
-- `PUT /api/students/{id}` - Update student
-- `DELETE /api/students/{id}` - Delete student
+### POST /api/upload
 
-### Alumni
-- `GET /api/alumni` - Get all alumni (paginated, searchable)
-- `GET /api/alumni/{id}` - Get alumni by ID
-- `POST /api/alumni` - Create new alumni
-- `PUT /api/alumni/{id}` - Update alumni
-- `DELETE /api/alumni/{id}` - Delete alumni
+Upload and process documents (PDF, TXT, DOCX).
 
-### Events
-- `GET /api/events` - Get all events (paginated, searchable, filterable)
-- `GET /api/events/{id}` - Get event by ID
-- `POST /api/events` - Create new event
-- `PUT /api/events/{id}` - Update event
-- `DELETE /api/events/{id}` - Delete event
-- `POST /api/events/{id}/register` - Register for event
+**Request:**
+- Content-Type: `multipart/form-data`
+- Body: Form data with `file` field
+
+**Example using curl:**
+```bash
+curl -X POST \
+  http://localhost:7071/api/upload \
+  -F "file=@document.pdf"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Document processed successfully",
+  "data": {
+    "filename": "document.pdf",
+    "totalChunks": 5,
+    "processedChunks": 5,
+    "storageStats": {
+      "totalSummaries": 5,
+      "totalDocuments": 1,
+      "storageSize": "2.5 KB"
+    }
+  }
+}
+```
+
+### POST /api/ask
+
+Ask questions about uploaded documents.
+
+**Request:**
+- Content-Type: `application/json`
+- Body: `{"question": "What is the main topic?"}`
+
+**Example using curl:**
+```bash
+curl -X POST \
+  http://localhost:7071/api/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What are the key points discussed?"}'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "question": "What are the key points discussed?",
+  "answer": "Based on the uploaded documents, the key points include...",
+  "context": {
+    "documentsFound": 1,
+    "relevantSummaries": 3,
+    "sourcesUsed": ["document.pdf"]
+  }
+}
+```
 
 ## Query Parameters
 

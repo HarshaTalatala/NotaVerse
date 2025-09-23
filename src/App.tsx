@@ -14,6 +14,7 @@ import EnhancedCollaborationHubPage from './pages/EnhancedCollaborationHubPage';
 import TeamWorkspacePage from './pages/TeamWorkspacePage';
 import MessagesPage from './pages/MessagesPage';
 import AlumniMessagesPage from './pages/AlumniMessagesPage';
+import NotaBuddyPage from './pages/NotaBuddyPage';
 import Layout from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/events" element={<EventsPage />} />
           <Route path="/messages" element={<ProtectedRoute requiredRoles={['student']}> <MessagesPage /> </ProtectedRoute>} />
           <Route path="/alumni-messages" element={<ProtectedRoute requiredRoles={['alumni']}> <AlumniMessagesPage /> </ProtectedRoute>} />
+          <Route path="/notabuddy" element={<NotaBuddyPage />} />
         </Route>
         
         <Route path="*" element={<Navigate to="/" replace />} />

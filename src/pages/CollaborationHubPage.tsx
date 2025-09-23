@@ -109,6 +109,52 @@ const CollaborationHubPage: React.FC = () => {
     setTimeout(() => setUploadMessage(null), 5000);
   };
 
+  // Initialize dummy teams if none exist
+  useEffect(() => {
+    const initializeDummyTeams = async () => {
+      if (!teamsLoading && teams.length === 0 && user?.uid) {
+        try {
+          // Create NotaVerse team
+          await createTeam({
+            name: 'NotaVerse',
+            description: 'The official NotaVerse development team focused on building the next-generation student collaboration platform. Working on innovative features including AI-powered document analysis, real-time collaboration tools, and seamless academic workflows. Our team consists of 6 dedicated developers working on cutting-edge educational technology.',
+            createdBy: user.uid,
+            createdByName: user.displayName || user.email || 'System Admin',
+            isPrivate: false,
+            tags: ['development', 'platform', 'education', 'collaboration', 'ai', 'students']
+          });
+
+          // Create Team REconnect
+          await createTeam({
+            name: 'Team REconnect',
+            description: 'Our dynamic hackathon team specializing in innovative solutions for reconnecting alumni with their institutions and peers. We focus on building bridges between past and present, creating meaningful connections through technology. Team members: Jessica Thompson (Alumni Lead), Ryan Patel, Maria Garcia, James Wilson, Lisa Zhang, and our Team Lead - bringing together 6 passionate innovators for meaningful alumni engagement.',
+            createdBy: user.uid,
+            createdByName: user.displayName || user.email || 'Team Lead',
+            isPrivate: false,
+            tags: ['hackathon', 'alumni', 'networking', 'innovation', 'reconnect', 'competition']
+          });
+
+          // Create additional demo team
+          await createTeam({
+            name: 'AI Research Collective',
+            description: 'A collaborative research group focused on advancing artificial intelligence applications in education. Our interdisciplinary team of 6 researchers explores machine learning, natural language processing, and educational technology to create smarter learning experiences.',
+            createdBy: user.uid,
+            createdByName: user.displayName || user.email || 'Research Lead',
+            isPrivate: false,
+            tags: ['ai', 'research', 'machine-learning', 'education', 'innovation']
+          });
+          
+          // Refresh teams after creation
+          await fetchTeams();
+        } catch (error) {
+          console.error('Failed to initialize dummy teams:', error);
+        }
+      }
+    };
+
+    initializeDummyTeams();
+  }, [teamsLoading, teams.length, user, createTeam, fetchTeams]);
+
   if (notesLoading || teamsLoading || activitiesLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
