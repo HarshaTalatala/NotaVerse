@@ -11,6 +11,6 @@
     "AZURE_STORAGE_CONNECTION_STRING": "DefaultEndpointsProtocol=https;AccountName=notaversefiles;AccountKey=PdeMgtTT73Oo+noQ9wHCiSZbPIOIodcJM8HWwsna7K1HC21fFeq6uh2LZaeTzjDzy7zN6lPXEI0O+ASt38/khQ==;EndpointSuffix=core.windows.net",
     "AZURE_STORAGE_CONTAINER_NAME": "collaboration-files",
     "GOOGLE_APPLICATION_CREDENTIALS": "",
-    "GEMINI_API_KEY": "AIzaSyCjRgrxPtxTpaJ_5kn31UgwG5t62-3dP8A"
+    "GEMINI_API_KEY": "your_google_gemini_api_key_here"
   }
 }
