@@ -78,6 +78,9 @@ temp/
 config/local.json
 secrets.json
 
+# Azure Functions local settings (do not commit secrets)
+api/local.settings.json
+
 # Firebase config (if using local config files)
 firebase-debug.log
 firestore-debug.log
