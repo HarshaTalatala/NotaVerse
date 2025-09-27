@@ -1,0 +1,489 @@
+import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { Activity, ApiResponse, PaginatedResponse } from '../types';
+
+// Initialize Firebase Admin if not already initialized
+let db: any = null;
+try {
+  if (getApps().length === 0 && process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+    initializeApp({
+      credential: cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+    });
+    db = getFirestore();
+  }
+} catch (error) {
+  console.log('Firebase initialization skipped - no valid credentials provided');
+}
+
+// GET /api/activities - Get activity feed with filtering and pagination
+async function getActivities(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  try {
+    if (!db) {
+      return {
+        status: 503,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: 'Database not available - Firebase not configured'
+        })
+      };
+    }
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const userId = url.searchParams.get('userId') || '';
+    const teamId = url.searchParams.get('teamId') || '';
+    const type = url.searchParams.get('type') || '';
+    const entityType = url.searchParams.get('entityType') || '';
+    const dateFrom = url.searchParams.get('dateFrom');
+    const dateTo = url.searchParams.get('dateTo');
+
+    let query = db.collection('activities').orderBy('createdAt', 'desc');
+
+    // Apply filters
+    if (userId) {
+      query = query.where('userId', '==', userId);
+    }
+    if (type) {
+      query = query.where('type', '==', type);
+    }
+    if (entityType) {
+      query = query.where('entityType', '==', entityType);
+    }
+    if (dateFrom) {
+      query = query.where('createdAt', '>=', new Date(dateFrom));
+    }
+    if (dateTo) {
+      query = query.where('createdAt', '<=', new Date(dateTo));
+    }
+
+    // Get total count for pagination
+    const countSnapshot = await query.get();
+    let activities: Activity[] = [];
+    
+    countSnapshot.forEach((doc) => {
+      const data = doc.data();
+      activities.push({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate(),
+      } as Activity);
+    });
+
+    // If teamId filter is provided, we need to get team member activities
+    if (teamId) {
+      // First get the team to find all member IDs
+      const teamDoc = await db.collection('teams').doc(teamId).get();
+      if (teamDoc.exists) {
+        const teamData = teamDoc.data();
+        const memberIds = teamData?.members?.map((member: any) => member.userId) || [];
+        
+        // Filter activities to only include team members' activities
+        activities = activities.filter(activity => 
+          memberIds.includes(activity.userId) || 
+          (activity.metadata && activity.metadata.teamId === teamId)
+        );
+      }
+    }
+
+    const total = activities.length;
+
+    // Apply pagination
+    const offset = (page - 1) * limit;
+    const paginatedActivities = activities.slice(offset, offset + limit);
+
+    const response: PaginatedResponse<Activity> = {
+      success: true,
+      data: paginatedActivities,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+
+    return {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': '*'
+      },
+      body: JSON.stringify(response)
+    };
+  } catch (error: any) {
+    context.error('Error getting activities:', error);
+    return {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        success: false,
+        error: 'Internal server error'
+      })
+    };
+  }
+}
+
+// GET /api/activities/dashboard - Get dashboard activity summary
+async function getDashboardActivities(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  try {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get('userId') || '';
+    const limit = parseInt(url.searchParams.get('limit') || '10');
+
+    if (!userId) {
+      return {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: 'User ID is required'
+        })
+      };
+    }
+
+    // Get user's teams to include team activities
+    const teamsSnapshot = await db.collection('teams')
+      .where('members', 'array-contains', { userId })
+      .get();
+    
+    const teamIds: string[] = [];
+    teamsSnapshot.forEach(doc => {
+      teamIds.push(doc.id);
+    });
+
+    // Get recent activities (last 7 days)
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    const activitiesSnapshot = await db.collection('activities')
+      .where('createdAt', '>=', weekAgo)
+      .orderBy('createdAt', 'desc')
+      .limit(100)
+      .get();
+
+    let activities: Activity[] = [];
+    activitiesSnapshot.forEach((doc) => {
+      const data = doc.data();
+      activities.push({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate(),
+      } as Activity);
+    });
+
+    // Filter for relevant activities (user's own activities or team activities)
+    const relevantActivities = activities.filter(activity => {
+      // User's own activities
+      if (activity.userId === userId) return true;
+      
+      // Team-related activities
+      if (activity.metadata && activity.metadata.teamId && teamIds.includes(activity.metadata.teamId)) {
+        return true;
+      }
+      
+      // Public activities from user's teams
+      if (teamIds.length > 0 && activity.entityType === 'note' && !activity.metadata?.isPrivate) {
+        return true;
+      }
+      
+      return false;
+    });
+
+    // Limit results
+    const limitedActivities = relevantActivities.slice(0, limit);
+
+    // Get activity statistics
+    const stats = {
+      totalActivities: relevantActivities.length,
+      notesCreated: relevantActivities.filter(a => a.type === 'note_created').length,
+      notesUpdated: relevantActivities.filter(a => a.type === 'note_updated').length,
+      commentsAdded: relevantActivities.filter(a => a.type === 'comment_added').length,
+      filesUploaded: relevantActivities.filter(a => a.type === 'file_uploaded').length,
+      teamsJoined: relevantActivities.filter(a => a.type === 'team_joined').length,
+      teamsCreated: relevantActivities.filter(a => a.type === 'team_created').length,
+    };
+
+    const response: ApiResponse<{
+      activities: Activity[];
+      stats: typeof stats;
+    }> = {
+      success: true,
+      data: {
+        activities: limitedActivities,
+        stats
+      }
+    };
+
+    return {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify(response)
+    };
+  } catch (error: any) {
+    context.error('Error getting dashboard activities:', error);
+    return {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        success: false,
+        error: 'Internal server error'
+      })
+    };
+  }
+}
+
+// POST /api/activities - Create a new activity (manual activity creation)
+async function createActivity(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  try {
+    const body = await request.json() as Partial<Activity>;
+    
+    if (!body.userId || !body.userName || !body.type || !body.entityId || !body.entityType || !body.description) {
+      return {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: 'UserId, userName, type, entityId, entityType, and description are required'
+        })
+      };
+    }
+
+    const activity: Omit<Activity, 'id'> = {
+      userId: body.userId,
+      userName: body.userName,
+      userRole: body.userRole || 'student',
+      type: body.type as any,
+      entityId: body.entityId,
+      entityType: body.entityType as any,
+      description: body.description,
+      metadata: body.metadata,
+      createdAt: new Date()
+    };
+
+    const docRef = await db.collection('activities').add(activity);
+
+    const response: ApiResponse<{ id: string }> = {
+      success: true,
+      data: { id: docRef.id },
+      message: 'Activity created successfully'
+    };
+
+    return {
+      status: 201,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify(response)
+    };
+  } catch (error: any) {
+    context.error('Error creating activity:', error);
+    return {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        success: false,
+        error: 'Internal server error'
+      })
+    };
+  }
+}
+
+// GET /api/activities/stats - Get activity statistics
+async function getActivityStats(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  try {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get('userId');
+    const teamId = url.searchParams.get('teamId');
+    const days = parseInt(url.searchParams.get('days') || '30');
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    let query = db.collection('activities')
+      .where('createdAt', '>=', startDate);
+
+    if (userId) {
+      query = query.where('userId', '==', userId);
+    }
+
+    const snapshot = await query.get();
+    
+    let activities: Activity[] = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      activities.push({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate(),
+      } as Activity);
+    });
+
+    // Filter by team if specified
+    if (teamId) {
+      const teamDoc = await db.collection('teams').doc(teamId).get();
+      if (teamDoc.exists) {
+        const teamData = teamDoc.data();
+        const memberIds = teamData?.members?.map((member: any) => member.userId) || [];
+        activities = activities.filter(activity => 
+          memberIds.includes(activity.userId) || 
+          (activity.metadata && activity.metadata.teamId === teamId)
+        );
+      }
+    }
+
+    // Calculate statistics
+    const stats = {
+      totalActivities: activities.length,
+      activitiesByType: {
+        note_created: activities.filter(a => a.type === 'note_created').length,
+        note_updated: activities.filter(a => a.type === 'note_updated').length,
+        comment_added: activities.filter(a => a.type === 'comment_added').length,
+        file_uploaded: activities.filter(a => a.type === 'file_uploaded').length,
+        team_joined: activities.filter(a => a.type === 'team_joined').length,
+        team_created: activities.filter(a => a.type === 'team_created').length,
+      },
+      activitiesByDay: {} as Record<string, number>,
+      topContributors: {} as Record<string, number>
+    };
+
+    // Group by day
+    activities.forEach(activity => {
+      const day = activity.createdAt.toISOString().split('T')[0];
+      stats.activitiesByDay[day] = (stats.activitiesByDay[day] || 0) + 1;
+    });
+
+    // Count top contributors
+    activities.forEach(activity => {
+      stats.topContributors[activity.userName] = (stats.topContributors[activity.userName] || 0) + 1;
+    });
+
+    const response: ApiResponse<typeof stats> = {
+      success: true,
+      data: stats
+    };
+
+    return {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify(response)
+    };
+  } catch (error: any) {
+    context.error('Error getting activity stats:', error);
+    return {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        success: false,
+        error: 'Internal server error'
+      })
+    };
+  }
+}
+
+// Register HTTP functions
+app.http('activities-get', {
+  methods: ['GET'],
+  route: 'activities',
+  authLevel: 'anonymous',
+  handler: getActivities
+});
+
+app.http('activities-dashboard', {
+  methods: ['GET'],
+  route: 'activities/dashboard',
+  authLevel: 'anonymous',
+  handler: getDashboardActivities
+});
+
+app.http('activities-post', {
+  methods: ['POST'],
+  route: 'activities',
+  authLevel: 'anonymous',
+  handler: createActivity
+});
+
+app.http('activities-stats', {
+  methods: ['GET'],
+  route: 'activities/stats',
+  authLevel: 'anonymous',
+  handler: getActivityStats
+});
+
+// Handle OPTIONS requests for CORS
+app.http('activities-options', {
+  methods: ['OPTIONS'],
+  route: 'activities',
+  authLevel: 'anonymous',
+  handler: async () => ({
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': '*',
+      'Access-Control-Allow-Methods': '*'
+    }
+  })
+});
+
+app.http('activities-dashboard-options', {
+  methods: ['OPTIONS'],
+  route: 'activities/dashboard',
+  authLevel: 'anonymous',
+  handler: async () => ({
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': '*',
+      'Access-Control-Allow-Methods': '*'
+    }
+  })
+});
+
+app.http('activities-stats-options', {
+  methods: ['OPTIONS'],
+  route: 'activities/stats',
+  authLevel: 'anonymous',
+  handler: async () => ({
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': '*',
+      'Access-Control-Allow-Methods': '*'
+    }
+  })
+});
