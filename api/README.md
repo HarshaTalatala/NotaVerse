@@ -310,3 +310,11 @@ Currently using in-memory storage for development. For production, integrate wit
 ## License
 
 MIT License
+
+## Security and Secrets
+
+- Do not commit `local.settings.json` or any file containing secret keys to the repository. Use the provided `local.settings.json.template` to create your local copy.
+- If you accidentally committed secrets, rotate them immediately and consider purging them from git history (see root `SECURITY.md`).
+- Store API keys and credentials in environment variables or your CI/CD secrets store.
+
+For detailed steps on rotating keys and removing secrets from history, see `../SECURITY.md`.

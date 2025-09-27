@@ -15,7 +15,10 @@
     "build:azure": "npm run test && npm run build:all",
     "start": "vite preview --host 0.0.0.0 --port 8080",
     "dev:api": "cd api && func start",
-    "dev:full": "concurrently \"npm run dev:api\" \"npm run dev\""
+    "dev:full": "concurrently \"npm run dev:api\" \"npm run dev\"",
+    "clean:frontend": "node -e \"const f=require('fs');f.rmSync('./dist',{recursive:true,force:true});f.rmSync('./node_modules',{recursive:true,force:true});if(f.existsSync('./tsconfig.tsbuildinfo')) f.rmSync('./tsconfig.tsbuildinfo');console.log('Frontend cleaned')\"",
+    "clean:api": "npm --prefix api run clean",
+    "clean:all": "npm run clean:api && npm run clean:frontend"
   },
   "dependencies": {
     "@azure/identity": "^4.12.0",

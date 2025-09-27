@@ -1,7 +1,10 @@
 const { BlobServiceClient } = require('@azure/storage-blob');
 
-const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING || 
-  'DefaultEndpointsProtocol=https;AccountName=notaversefiles;AccountKey=PdeMgtTT73Oo+noQ9wHCiSZbPIOIodcJM8HWwsna7K1HC21fFeq6uh2LZaeTzjDzy7zN6lPXEI0O+ASt38/khQ==;EndpointSuffix=core.windows.net';
+const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+if (!connectionString) {
+  console.error('ERROR: AZURE_STORAGE_CONNECTION_STRING is not set.\nSet it in api/local.settings.json (from local.settings.json.template) or as an environment variable.');
+  process.exit(1);
+}
 
 async function configureBlobCors() {
   try {

@@ -9,6 +9,13 @@ const path = require('path');
 
 console.log('🚀 NotaVerse Backend Setup Verification\n');
 
+// SECURITY NOTE: Do NOT commit `local.settings.json` or other files containing secrets.
+// Use `local.settings.json.template` and copy to `local.settings.json` with your own values.
+const templatePath = path.join(__dirname, 'local.settings.json.template');
+if (!fs.existsSync(templatePath)) {
+    console.warn('⚠️  local.settings.json.template is missing. Please create one from the project templates.');
+}
+
 // Check if we're in the right directory
 const packageJsonPath = path.join(__dirname, 'package.json');
 if (!fs.existsSync(packageJsonPath)) {
@@ -51,7 +58,7 @@ if (!geminiKey || geminiKey === 'your_google_gemini_api_key_here') {
     console.warn('⚠️  GEMINI_API_KEY not configured in local.settings.json');
     console.log('Get your API key from: https://makersuite.google.com/app/apikey');
 } else {
-    console.log('✅ GEMINI_API_KEY configured');
+    console.log('✅ GEMINI_API_KEY configured (value hidden)');
 }
 
 // Check function files
