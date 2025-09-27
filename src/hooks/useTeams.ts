@@ -8,6 +8,7 @@ export const useTeams = (params: {
   limit?: number;
   search?: string;
   userId?: string;
+  userEmail?: string;
   isPrivate?: boolean;
   tags?: string[];
 } = {}) => {

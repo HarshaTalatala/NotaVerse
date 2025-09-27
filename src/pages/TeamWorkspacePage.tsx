@@ -41,7 +41,10 @@ const TeamWorkspacePage: React.FC = () => {
 
 
   // Load team data with enhanced parameters
-  const { teams, fetchTeams, loading: teamsLoading, error: teamsError } = useTeams();
+  const { teams, fetchTeams, loading: teamsLoading, error: teamsError } = useTeams({
+    userId: user?.uid,
+    userEmail: user?.email ?? undefined
+  });
   
   // Load team-specific data with filtered parameters
   const { notes, loading: notesLoading, error: notesError, createNote, fetchNotes } = useNotes({
@@ -510,7 +513,7 @@ const TeamWorkspacePage: React.FC = () => {
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">Manage your team members and their roles</p>
               </div>
               {canEdit && (
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm" onClick={() => { setSelectedTeam(team); setShowMemberManagement(true); }}>
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
@@ -519,8 +522,8 @@ const TeamWorkspacePage: React.FC = () => {
               )}
             </div>
             <div className="grid gap-4">
-              {team.members.map((member) => (
-                <Card key={member.userId} className="p-5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 hover:border-indigo-200 dark:hover:border-indigo-800/60 hover:shadow-lg transition-all duration-200">
+              {team.members.map((member, idx) => (
+                <Card key={member.userId || member.userName + idx} className="p-5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 hover:border-indigo-200 dark:hover:border-indigo-800/60 hover:shadow-lg transition-all duration-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-indigo-500 via-purple-600 to-pink-600 flex items-center justify-center shadow-md">
@@ -530,7 +533,15 @@ const TeamWorkspacePage: React.FC = () => {
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900 dark:text-white">{member.userName || 'Unknown User'}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{member.userRole}</p>
+                        {/* Show email if available, or mark as invited */}
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {member.userId
+                            ? member.userRole
+                            : 'Invited'}
+                        </p>
+                        {member.userId ? null : (
+                          <p className="text-xs text-gray-400">{member.userName}</p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
@@ -899,8 +910,14 @@ const TeamWorkspacePage: React.FC = () => {
             setSelectedTeam(null);
           }}
           onInviteMember={async (teamId, email, role) => {
-            // Handle member invitation
-            await fetchTeams();
+            // Call backend invite function
+            try {
+              const svc = await import('../services/firebaseCollaborationService');
+              await svc.firebaseCollaborationService.inviteMemberToTeam(teamId, email, role);
+              await fetchTeams();
+            } catch (err) {
+              console.error('Invite failed:', err);
+            }
           }}
           onUpdateMemberRole={async (teamId, userId, role) => {
             // Handle member role update

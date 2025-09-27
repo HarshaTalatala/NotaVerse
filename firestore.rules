@@ -93,7 +93,21 @@ service cloud.firestore {
         request.auth.uid == request.resource.data.createdBy;
       allow update: if request.auth != null && (
         request.auth.uid == resource.data.createdBy ||
-        isAdmin()
+        isAdmin() ||
+        (
+          resource.data.members != null && (
+            (resource.data.members.size() > 0 && resource.data.members[0].userId == request.auth.uid && (resource.data.members[0].teamRole == 'owner' || resource.data.members[0].teamRole == 'admin')) ||
+            (resource.data.members.size() > 1 && resource.data.members[1].userId == request.auth.uid && (resource.data.members[1].teamRole == 'owner' || resource.data.members[1].teamRole == 'admin')) ||
+            (resource.data.members.size() > 2 && resource.data.members[2].userId == request.auth.uid && (resource.data.members[2].teamRole == 'owner' || resource.data.members[2].teamRole == 'admin')) ||
+            (resource.data.members.size() > 3 && resource.data.members[3].userId == request.auth.uid && (resource.data.members[3].teamRole == 'owner' || resource.data.members[3].teamRole == 'admin')) ||
+            (resource.data.members.size() > 4 && resource.data.members[4].userId == request.auth.uid && (resource.data.members[4].teamRole == 'owner' || resource.data.members[4].teamRole == 'admin')) ||
+            (resource.data.members.size() > 5 && resource.data.members[5].userId == request.auth.uid && (resource.data.members[5].teamRole == 'owner' || resource.data.members[5].teamRole == 'admin')) ||
+            (resource.data.members.size() > 6 && resource.data.members[6].userId == request.auth.uid && (resource.data.members[6].teamRole == 'owner' || resource.data.members[6].teamRole == 'admin')) ||
+            (resource.data.members.size() > 7 && resource.data.members[7].userId == request.auth.uid && (resource.data.members[7].teamRole == 'owner' || resource.data.members[7].teamRole == 'admin')) ||
+            (resource.data.members.size() > 8 && resource.data.members[8].userId == request.auth.uid && (resource.data.members[8].teamRole == 'owner' || resource.data.members[8].teamRole == 'admin')) ||
+            (resource.data.members.size() > 9 && resource.data.members[9].userId == request.auth.uid && (resource.data.members[9].teamRole == 'owner' || resource.data.members[9].teamRole == 'admin'))
+          )
+        )
       );
       allow delete: if request.auth != null && (
         request.auth.uid == resource.data.createdBy ||

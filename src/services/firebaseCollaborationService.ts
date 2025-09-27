@@ -17,6 +17,51 @@ import { Note, Team, Activity, Comment, FileAttachment, PaginatedResponse, ApiRe
 
 // Firebase fallback service for when Azure Functions backend is not available
 export class FirebaseCollaborationService {
+  /**
+   * Invite a member to a team by email and role.
+   * Adds the member to the team's members array in Firestore.
+   */
+  async inviteMemberToTeam(teamId: string, email: string, role: string) {
+    try {
+      const teamRef = doc(this.getDb(), 'teams', teamId);
+      // Fetch the team document
+      const teamSnap = await getDocs(query(collection(this.getDb(), 'teams'), where('__name__', '==', teamId)));
+      if (teamSnap.empty) throw new Error('Team not found');
+      const teamData = teamSnap.docs[0].data();
+      // Check if member already exists (by email or userId)
+      const existing = teamData.members?.find((m: any) => m.email === email || m.userId === email);
+      if (existing) throw new Error('Member already invited');
+
+      // Try to find userId and userName for this email
+      let userId = '';
+      let userName = email;
+      let userRole = 'viewer';
+      let joinedAt = new Date();
+      // Search for user in 'users' collection
+      const usersSnap = await getDocs(query(collection(this.getDb(), 'users'), where('email', '==', email)));
+      if (!usersSnap.empty) {
+        const userDoc = usersSnap.docs[0];
+        userId = userDoc.id;
+        userName = userDoc.data().displayName || userDoc.data().name || email;
+        userRole = userDoc.data().role || 'viewer';
+      }
+
+      // Add new member directly
+      const newMember = {
+        userId,
+        userName,
+        userRole,
+        teamRole: role,
+        joinedAt
+      };
+      const updatedMembers = [...(teamData.members || []), newMember];
+      await updateDoc(teamRef, { members: updatedMembers });
+      return { success: true, data: newMember };
+    } catch (error) {
+      console.error('Error inviting member:', error);
+      throw error;
+    }
+  }
   private getDb(): Firestore {
     if (!db) {
       throw new Error('Firebase is not properly configured. Please check your environment variables.');
@@ -147,7 +192,7 @@ export class FirebaseCollaborationService {
   }
 
   // Teams operations
-  async getTeams(filters?: { page?: number; limit?: number; userId?: string }) {
+  async getTeams(filters?: { page?: number; limit?: number; userId?: string; userEmail?: string }) {
     try {
       let teamsQuery = query(
         collection(this.getDb(), 'teams'), 
@@ -165,10 +210,13 @@ export class FirebaseCollaborationService {
         createdAt: doc.data().createdAt?.toDate(),
       })) as Team[];
 
-      // Filter by user membership if userId provided
-      if (filters?.userId) {
+      // Filter by user membership if userId or userEmail provided
+      if (filters?.userId || filters?.userEmail) {
         teams = teams.filter(team => 
-          team.members.some(member => member.userId === filters.userId)
+          team.members.some(member => 
+            (filters.userId && member.userId === filters.userId) ||
+            (filters.userEmail && member.userName === filters.userEmail)
+          )
         );
       }
 
