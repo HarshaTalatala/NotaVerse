@@ -13,7 +13,6 @@
     "noEmit": true,
     "strict": true,
     "baseUrl": ".",
-    "types": ["vitest", "@testing-library/jest-dom"],
     "paths": {
       "@/components/*": ["src/components/*"],
       "@/pages/*": ["src/pages/*"],
@@ -23,7 +22,7 @@
   "@/types/*": ["src/types/*"]
     }
   },
-  "include": ["src", "src/test", "./vitest.config.ts"],
+  "include": ["src"],
   "references": []
 }
 
